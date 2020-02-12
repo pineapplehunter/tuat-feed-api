@@ -3,7 +3,7 @@ use serde::Serialize;
 use std::collections::HashMap;
 
 static FEED_URL: &str = "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=0&par=20&skip=0";
-// static INFO_URL_BASE: &str = "http://t-board.office.tuat.ac.jp/T/boar/vewAjax.php?i={}";
+static INFO_URL_BASE: &str = "http://t-board.office.tuat.ac.jp/T/boar/vewAjax.php?i=";
 
 #[derive(Debug, Serialize)]
 pub struct Info {
@@ -45,15 +45,12 @@ pub async fn parser() -> Result<Vec<Info>, String> {
     for id in ids.iter() {
         let mut information = Info::new(*id);
 
-        let content: String = reqwest::get(&format!(
-            "http://t-board.office.tuat.ac.jp/T/boar/vewAjax.php?i={}",
-            id
-        ))
-        .await
-        .map_err(|e| e.to_string())?
-        .text()
-        .await
-        .unwrap();
+        let content: String = reqwest::get(&format!("{}{}", INFO_URL_BASE, id))
+            .await
+            .map_err(|e| e.to_string())?
+            .text()
+            .await
+            .unwrap();
         let info_doc = Html::parse_document(&content);
         let tr_selector = Selector::parse("table>tbody>tr").unwrap();
 
