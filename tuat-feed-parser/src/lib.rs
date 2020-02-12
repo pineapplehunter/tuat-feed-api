@@ -2,10 +2,13 @@ use scraper::{Html, Selector};
 use serde::Serialize;
 use std::collections::HashMap;
 
-static FEED_URL: &str = "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=0&par=20&skip=0";
+static CAMPUS_FEED_URL: &str =
+    "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=0&par=20&skip=0";
+static ACADEMIC_FEED_URL: &str =
+    "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=1&par=20&skip=0";
 static INFO_URL_BASE: &str = "http://t-board.office.tuat.ac.jp/T/boar/vewAjax.php?i=";
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Info {
     pub id: u32,
     pub data: HashMap<String, String>,
@@ -20,8 +23,16 @@ impl Info {
     }
 }
 
-pub async fn parser() -> Result<Vec<Info>, String> {
-    let content: String = reqwest::get(FEED_URL)
+pub async fn get_campus_feed() -> Result<Vec<Info>, String> {
+    parser(CAMPUS_FEED_URL, INFO_URL_BASE).await
+}
+
+pub async fn get_academic_feed() -> Result<Vec<Info>, String> {
+    parser(ACADEMIC_FEED_URL, INFO_URL_BASE).await
+}
+
+async fn parser(feed_url: &str, info_url: &str) -> Result<Vec<Info>, String> {
+    let content: String = reqwest::get(feed_url)
         .await
         .map_err(|e| e.to_string())?
         .text()
@@ -45,7 +56,7 @@ pub async fn parser() -> Result<Vec<Info>, String> {
     for id in ids.iter() {
         let mut information = Info::new(*id);
 
-        let content: String = reqwest::get(&format!("{}{}", INFO_URL_BASE, id))
+        let content: String = reqwest::get(&format!("{}{}", info_url, id))
             .await
             .map_err(|e| e.to_string())?
             .text()
