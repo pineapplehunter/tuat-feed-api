@@ -10,3 +10,4 @@ edition = "2018"
 scraper = "0.11.0"
 serde = {version="1.0.104", features=["derive"]}
 reqwest = "0.10.1"
+futures = "0.3.4"
