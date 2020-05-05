@@ -54,7 +54,7 @@ async fn parser(feed_url: &str, info_url: &str) -> Result<Vec<Info>, String> {
         ids.push(id);
     }
 
-    println!("{:?}", ids);
+    // println!("{:?}", ids);
 
     let informations: Vec<Info> = stream::iter(ids)
         .map(|id| get_info(info_url, id))
@@ -67,7 +67,7 @@ async fn parser(feed_url: &str, info_url: &str) -> Result<Vec<Info>, String> {
 }
 
 async fn get_info(info_url: &str, id: u32) -> Result<Info, String> {
-    println!("called! {}", id);
+    // println!("called! {}", id);
     let mut information = Info::new(id);
 
     let content: String = reqwest::get(&format!("{}{}", info_url, id))
