@@ -1,4 +1,6 @@
+use async_std::prelude::*;
 use std::env::args;
+use std::future::Future;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
 use tide::{Request, Response};
@@ -12,6 +14,18 @@ const INTERVAL: Duration = Duration::from_secs(INTERVAL_MIN * 60);
 struct State {
     academic: Arc<RwLock<InfoSection>>,
     campus: Arc<RwLock<InfoSection>>,
+}
+
+impl State {
+    fn init() -> impl Future<Output = Result<Self, String>> {
+        async {
+            let (academic, campus) = get_academic_info().join(get_campus_info()).await;
+            Ok(Self {
+                academic: Arc::new(RwLock::new(InfoSection::new(academic?))),
+                campus: Arc::new(RwLock::new(InfoSection::new(campus?))),
+            })
+        }
+    }
 }
 
 struct InfoSection {
@@ -116,15 +130,16 @@ async fn handle_academic(req: Request<State>) -> Response {
 
 #[async_std::main]
 async fn main() -> Result<(), String> {
-    let port: u32 = args().nth(1).unwrap_or("8080".to_string()).parse().unwrap();
-    let mut app = tide::with_state(State {
-        academic: Arc::new(RwLock::new(InfoSection::new(get_academic_info().await?))),
-        campus: Arc::new(RwLock::new(InfoSection::new(get_campus_info().await?))),
-    });
+    let port: u16 = args()
+        .nth(1)
+        .unwrap_or_else(|| "8080".to_string())
+        .parse()
+        .unwrap();
+    let mut app = tide::with_state(State::init().await?);
     app.at("/").get(handle_index);
     app.at("/campus").get(handle_campus);
     app.at("/academic").get(handle_academic);
-    app.listen(&format!("127.0.0.1:{}", port))
+    app.listen(("127.0.0.1", port))
         .await
         .map_err(|e| e.to_string())?;
     Ok(())
