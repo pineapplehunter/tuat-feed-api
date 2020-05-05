@@ -7,7 +7,7 @@ use tide::{Request, Response};
 use tokio::runtime::Runtime;
 use tuat_feed_parser::{get_academic_feed, get_campus_feed, Info};
 
-const INTERVAL_MIN: u64 = 15;
+const INTERVAL_MIN: u64 = 1;
 
 const INTERVAL: Duration = Duration::from_secs(INTERVAL_MIN * 60);
 
