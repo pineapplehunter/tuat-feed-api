@@ -1,3 +1,9 @@
+#![warn(missing_docs)]
+
+//! # tuat-feed-api(TUAT Feed API Server)
+//!
+//! This is code for a server that formatsthe TUAT feed to json
+
 use async_std::prelude::*;
 use std::env::args;
 use std::future::Future;
@@ -7,16 +13,24 @@ use tide::{Request, Response};
 use tokio::runtime::Runtime;
 use tuat_feed_parser::{get_academic_feed, get_campus_feed, Info};
 
+/// Interval time (in minutes) for checking for new content.
 const INTERVAL_MIN: u64 = 15;
 
+/// Interval duration computed from `INTERVAL_MIN`.
 const INTERVAL: Duration = Duration::from_secs(INTERVAL_MIN * 60);
 
+/// State of the server.
+/// contains data for both academic and campus information.
 struct State {
+    /// academic information.
     academic: Arc<RwLock<InfoSection>>,
+    /// campus information.
     campus: Arc<RwLock<InfoSection>>,
 }
 
 impl State {
+    /// initializes the state.
+    /// fetches the data from tuat feed and stores it.
     fn init() -> impl Future<Output = Result<Self, String>> {
         async {
             let (academic, campus) = get_academic_info().join(get_campus_info()).await;
@@ -28,12 +42,17 @@ impl State {
     }
 }
 
+/// InfoSection.
+/// This struct holds the information and when it was last checked.
 struct InfoSection {
+    /// the time the information was last checked.
     last_checked: Instant,
+    /// actual information.
     info: Vec<Info>,
 }
 
 impl InfoSection {
+    /// creates a new InfoSection from a `Vec<Info>`.
     fn new(info: Vec<Info>) -> Self {
         InfoSection {
             info,
@@ -41,12 +60,15 @@ impl InfoSection {
         }
     }
 
+    /// set a new state.
+    /// (used for updating the information)
     fn set(&mut self, info: Vec<Info>) {
         self.info = info;
         self.last_checked = Instant::now();
     }
 }
 
+/// this function get's the academic information from `tuat-feed-parser`
 async fn get_academic_info() -> Result<Vec<Info>, String> {
     let rt = Runtime::new();
     if let Err(e) = rt {
@@ -56,6 +78,7 @@ async fn get_academic_info() -> Result<Vec<Info>, String> {
     rt.block_on(async { get_academic_feed().await })
 }
 
+/// this function get's the campus information from `tuat-feed-parser`
 async fn get_campus_info() -> Result<Vec<Info>, String> {
     let rt = Runtime::new();
     if let Err(e) = rt {
@@ -65,6 +88,7 @@ async fn get_campus_info() -> Result<Vec<Info>, String> {
     rt.block_on(async { get_campus_feed().await })
 }
 
+/// handler for /
 async fn handle_index(req: Request<State>) -> Response {
     if Instant::now() > req.state().academic.read().unwrap().last_checked + INTERVAL {
         println!("fetching academic");
@@ -98,6 +122,7 @@ async fn handle_index(req: Request<State>) -> Response {
     Response::new(200).body_json(&res).unwrap()
 }
 
+/// handler for /campus
 async fn handle_campus(req: Request<State>) -> Response {
     if Instant::now() > req.state().campus.read().unwrap().last_checked + INTERVAL {
         println!("fetching campus");
@@ -113,6 +138,7 @@ async fn handle_campus(req: Request<State>) -> Response {
         .unwrap()
 }
 
+/// handler for /academic
 async fn handle_academic(req: Request<State>) -> Response {
     if Instant::now() > req.state().academic.read().unwrap().last_checked + INTERVAL {
         println!("fetching academic");
@@ -129,6 +155,7 @@ async fn handle_academic(req: Request<State>) -> Response {
 }
 
 #[async_std::main]
+/// the main server function
 async fn main() -> Result<(), String> {
     let port: u16 = args()
         .nth(1)
