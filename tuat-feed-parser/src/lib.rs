@@ -1,25 +1,32 @@
-// use futures::future;
-// use futures::prelude::*;
+#![warn(missing_docs)]
+
+//! # tuat-feed-parser
+//! this crate provides a api to access the tuat feed as a struct.
+
 use futures::stream::{self, StreamExt};
 use scraper::{Html, Selector};
 use serde::Serialize;
 use std::collections::HashMap;
 
-static CAMPUS_FEED_URL: &str =
+const CAMPUS_FEED_URL: &str =
     "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=0&par=20&skip=0";
-static ACADEMIC_FEED_URL: &str =
+const ACADEMIC_FEED_URL: &str =
     "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=1&par=20&skip=0";
 static INFO_URL_BASE: &str = "http://t-board.office.tuat.ac.jp/T/boar/vewAjax.php?i=";
 
 const BUFFERED_NUM: usize = 10;
 
+/// holds the information id and the information as a hashmap
 #[derive(Debug, Serialize, Clone)]
 pub struct Info {
+    /// the id of the information. found in the tuat feed.
     pub id: u32,
+    /// the actual data. key is from the table on the tuat feed.
     pub data: HashMap<String, String>,
 }
 
 impl Info {
+    /// creates a new `Info`
     pub fn new(id: u32) -> Self {
         Self {
             id,
@@ -28,10 +35,12 @@ impl Info {
     }
 }
 
+/// get data from the campus feed
 pub async fn get_campus_feed() -> Result<Vec<Info>, String> {
     parser(CAMPUS_FEED_URL, INFO_URL_BASE).await
 }
 
+/// get data from the academic feed
 pub async fn get_academic_feed() -> Result<Vec<Info>, String> {
     parser(ACADEMIC_FEED_URL, INFO_URL_BASE).await
 }
@@ -54,8 +63,6 @@ async fn parser(feed_url: &str, info_url: &str) -> Result<Vec<Info>, String> {
         ids.push(id);
     }
 
-    // println!("{:?}", ids);
-
     let informations: Vec<Info> = stream::iter(ids)
         .map(|id| get_info(info_url, id))
         .buffered(BUFFERED_NUM)
@@ -67,7 +74,6 @@ async fn parser(feed_url: &str, info_url: &str) -> Result<Vec<Info>, String> {
 }
 
 async fn get_info(info_url: &str, id: u32) -> Result<Info, String> {
-    // println!("called! {}", id);
     let mut information = Info::new(id);
 
     let content: String = reqwest::get(&format!("{}{}", info_url, id))
