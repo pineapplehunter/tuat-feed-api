@@ -90,22 +90,41 @@ async fn get_campus_info() -> Result<Vec<Info>, String> {
 
 /// handler for /
 async fn handle_index(req: Request<State>) -> Response {
-    if Instant::now() > req.state().academic.read().unwrap().last_checked + INTERVAL {
-        println!("fetching academic");
-        let data = get_academic_info().await;
-        match data {
-            Ok(data) => req.state().academic.write().unwrap().set(data),
-            Err(e) => return Response::new(400).body_string(e),
-        }
-    }
+    let update_academic =
+        Instant::now() > req.state().academic.read().unwrap().last_checked + INTERVAL;
+    let update_campus = Instant::now() > req.state().campus.read().unwrap().last_checked + INTERVAL;
 
-    if Instant::now() > req.state().campus.read().unwrap().last_checked + INTERVAL {
-        println!("fetching campus");
-        let data = get_campus_info().await;
-        match data {
-            Ok(data) => req.state().campus.write().unwrap().set(data),
-            Err(e) => return Response::new(400).body_string(e),
+    match (update_academic, update_campus) {
+        (true, true) => {
+            println!("fetching both");
+            let (data_academic, data_campus) = get_academic_info().join(get_campus_info()).await;
+            match data_academic {
+                Ok(data) => req.state().academic.write().unwrap().set(data),
+                Err(e) => return Response::new(400).body_string(e),
+            }
+
+            match data_campus {
+                Ok(data) => req.state().campus.write().unwrap().set(data),
+                Err(e) => return Response::new(400).body_string(e),
+            }
         }
+        (true, false) => {
+            println!("fetching academic");
+            let data = get_academic_info().await;
+            match data {
+                Ok(data) => req.state().academic.write().unwrap().set(data),
+                Err(e) => return Response::new(400).body_string(e),
+            }
+        }
+        (false, true) => {
+            println!("fetching campus");
+            let data = get_campus_info().await;
+            match data {
+                Ok(data) => req.state().campus.write().unwrap().set(data),
+                Err(e) => return Response::new(400).body_string(e),
+            }
+        }
+        _ => {}
     }
 
     let res = req
@@ -166,6 +185,7 @@ async fn main() -> Result<(), String> {
     app.at("/").get(handle_index);
     app.at("/campus").get(handle_campus);
     app.at("/academic").get(handle_academic);
+    println!("server start!");
     app.listen(("127.0.0.1", port))
         .await
         .map_err(|e| e.to_string())?;
