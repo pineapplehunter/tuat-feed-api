@@ -180,7 +180,7 @@ async fn main() -> Result<(), String> {
         .nth(1)
         .unwrap_or_else(|| "8080".to_string())
         .parse()
-        .unwrap();
+        .expect("Invalid port number");
     let mut app = tide::with_state(State::init().await?);
     app.at("/").get(handle_index);
     app.at("/campus").get(handle_campus);
