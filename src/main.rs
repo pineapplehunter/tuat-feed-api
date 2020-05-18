@@ -4,11 +4,12 @@
 //!
 //! This is code for a server that formatsthe TUAT feed to json
 
+use anyhow::{anyhow, Result};
 use async_std::prelude::*;
-use std::env::args;
 use std::future::Future;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
+use structopt::StructOpt;
 use tide::{Request, Response};
 use tokio::runtime::Runtime;
 use tuat_feed_parser::{get_academic_feed, get_campus_feed, Info};
@@ -31,12 +32,16 @@ struct State {
 impl State {
     /// initializes the state.
     /// fetches the data from tuat feed and stores it.
-    fn init() -> impl Future<Output = Result<Self, String>> {
+    fn init() -> impl Future<Output = Result<Self>> {
         async {
             let (academic, campus) = get_academic_info().join(get_campus_info()).await;
             Ok(Self {
-                academic: Arc::new(RwLock::new(InfoSection::new(academic?))),
-                campus: Arc::new(RwLock::new(InfoSection::new(campus?))),
+                academic: Arc::new(RwLock::new(InfoSection::new(
+                    academic.map_err(|e| anyhow!("could not get academic info: {}", e))?,
+                ))),
+                campus: Arc::new(RwLock::new(InfoSection::new(
+                    campus.map_err(|e| anyhow!("could not get campus info: {}", e))?,
+                ))),
             })
         }
     }
@@ -69,23 +74,15 @@ impl InfoSection {
 }
 
 /// this function get's the academic information from `tuat-feed-parser`
-async fn get_academic_info() -> Result<Vec<Info>, String> {
-    let rt = Runtime::new();
-    if let Err(e) = rt {
-        return Err(e.to_string());
-    }
-    let mut rt = rt.unwrap();
-    rt.block_on(async { get_academic_feed().await })
+async fn get_academic_info() -> Result<Vec<Info>> {
+    let mut rt = Runtime::new()?;
+    Ok(rt.block_on(async { get_academic_feed().await })?)
 }
 
 /// this function get's the campus information from `tuat-feed-parser`
-async fn get_campus_info() -> Result<Vec<Info>, String> {
-    let rt = Runtime::new();
-    if let Err(e) = rt {
-        return Err(e.to_string());
-    }
-    let mut rt = rt.unwrap();
-    rt.block_on(async { get_campus_feed().await })
+async fn get_campus_info() -> Result<Vec<Info>> {
+    let mut rt = Runtime::new()?;
+    Ok(rt.block_on(async { get_campus_feed().await })?)
 }
 
 /// handler for /
@@ -100,12 +97,12 @@ async fn handle_index(req: Request<State>) -> Response {
             let (data_academic, data_campus) = get_academic_info().join(get_campus_info()).await;
             match data_academic {
                 Ok(data) => req.state().academic.write().unwrap().set(data),
-                Err(e) => return Response::new(400).body_string(e),
+                Err(e) => return Response::new(400).body_string(format!("error:{}", e)),
             }
 
             match data_campus {
                 Ok(data) => req.state().campus.write().unwrap().set(data),
-                Err(e) => return Response::new(400).body_string(e),
+                Err(e) => return Response::new(400).body_string(format!("error:{}", e)),
             }
         }
         (true, false) => {
@@ -113,7 +110,7 @@ async fn handle_index(req: Request<State>) -> Response {
             let data = get_academic_info().await;
             match data {
                 Ok(data) => req.state().academic.write().unwrap().set(data),
-                Err(e) => return Response::new(400).body_string(e),
+                Err(e) => return Response::new(400).body_string(format!("error:{}", e)),
             }
         }
         (false, true) => {
@@ -121,7 +118,7 @@ async fn handle_index(req: Request<State>) -> Response {
             let data = get_campus_info().await;
             match data {
                 Ok(data) => req.state().campus.write().unwrap().set(data),
-                Err(e) => return Response::new(400).body_string(e),
+                Err(e) => return Response::new(400).body_string(format!("error:{}", e)),
             }
         }
         _ => {}
@@ -148,7 +145,7 @@ async fn handle_campus(req: Request<State>) -> Response {
         let data = get_campus_info().await;
         match data {
             Ok(data) => req.state().campus.write().unwrap().set(data),
-            Err(e) => return Response::new(400).body_string(e),
+            Err(e) => return Response::new(400).body_string(format!("error:{}", e)),
         }
     }
 
@@ -164,7 +161,7 @@ async fn handle_academic(req: Request<State>) -> Response {
         let data = get_academic_info().await;
         match data {
             Ok(data) => req.state().academic.write().unwrap().set(data),
-            Err(e) => return Response::new(400).body_string(e),
+            Err(e) => return Response::new(400).body_string(format!("error:{}", e)),
         }
     }
 
@@ -173,21 +170,27 @@ async fn handle_academic(req: Request<State>) -> Response {
         .unwrap()
 }
 
+#[derive(StructOpt, Debug)]
+#[structopt(name = "tuat feed api")]
+struct Opt {
+    #[structopt(short, long)]
+    port: u16,
+    #[structopt(short, long, default_value = "localhost")]
+    hostname: String,
+}
+
 #[async_std::main]
 /// the main server function
-async fn main() -> Result<(), String> {
-    let port: u16 = args()
-        .nth(1)
-        .unwrap_or_else(|| "8080".to_string())
-        .parse()
-        .expect("Invalid port number");
+async fn main() -> Result<()> {
+    let Opt { port, hostname, .. } = Opt::from_args();
     let mut app = tide::with_state(State::init().await?);
     app.at("/").get(handle_index);
     app.at("/campus").get(handle_campus);
     app.at("/academic").get(handle_academic);
     println!("server start!");
-    app.listen(("127.0.0.1", port))
+
+    app.listen((hostname.as_str(), port))
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| anyhow!("could not start server: {}", e))?;
     Ok(())
 }
