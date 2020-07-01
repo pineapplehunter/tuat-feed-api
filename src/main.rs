@@ -6,7 +6,6 @@
 
 use anyhow::{anyhow, Result};
 use async_std::prelude::*;
-use std::future::Future;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
 use structopt::StructOpt;
@@ -32,18 +31,16 @@ struct State {
 impl State {
     /// initializes the state.
     /// fetches the data from tuat feed and stores it.
-    fn init() -> impl Future<Output = Result<Self>> {
-        async {
-            let (academic, campus) = get_academic_info().join(get_campus_info()).await;
-            Ok(Self {
-                academic: Arc::new(RwLock::new(InfoSection::new(
-                    academic.map_err(|e| anyhow!("could not get academic info: {}", e))?,
-                ))),
-                campus: Arc::new(RwLock::new(InfoSection::new(
-                    campus.map_err(|e| anyhow!("could not get campus info: {}", e))?,
-                ))),
-            })
-        }
+    async fn init() -> Result<Self> {
+        let (academic, campus) = get_academic_info().join(get_campus_info()).await;
+        Ok(Self {
+            academic: Arc::new(RwLock::new(InfoSection::new(
+                academic.map_err(|e| anyhow!("could not get academic info: {}", e))?,
+            ))),
+            campus: Arc::new(RwLock::new(InfoSection::new(
+                campus.map_err(|e| anyhow!("could not get campus info: {}", e))?,
+            ))),
+        })
     }
 }
 
