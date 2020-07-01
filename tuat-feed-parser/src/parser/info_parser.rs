@@ -1,37 +1,6 @@
-use scraper::{Html, Selector};
-use thiserror::Error;
-
+use super::ParseError;
 use crate::Info;
-
-/// the error that happens when parseing the web page
-#[derive(Error, Debug)]
-pub enum ParseError {
-    /// an error that happens when scraping
-    #[error("scraping error")]
-    ScrappingError(String),
-    /// when parsing an invalid int
-    #[error("int parse error")]
-    IntParseError(#[from] std::num::ParseIntError),
-}
-
-pub async fn main_page_parser(content: &String) -> Result<Vec<u32>, ParseError> {
-    let document = scraper::Html::parse_document(content);
-    let selector = Selector::parse("table>tbody>tr").unwrap();
-    let infos = document.select(&selector);
-
-    let mut ids = Vec::new();
-
-    for info in infos.into_iter() {
-        let id = info
-            .value()
-            .attr("i")
-            .ok_or(ParseError::ScrappingError("could not find attr 'i'".into()))?
-            .parse::<u32>()?;
-        ids.push(id);
-    }
-
-    Ok(ids)
-}
+use scraper::{Html, Selector};
 
 pub async fn info_parser(content: &String, id: u32) -> Result<Info, ParseError> {
     let mut information = Info::new(id);
