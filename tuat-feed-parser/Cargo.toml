@@ -12,3 +12,8 @@ serde = {version="1.0.104", features=["derive"]}
 reqwest = "0.10.1"
 futures = "0.3.4"
 thiserror = "1.0.18"
+
+[dev-dependencies]
+tokio = {version="0.2.21",features=["full"]}
+
+
