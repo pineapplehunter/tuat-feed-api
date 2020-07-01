@@ -15,8 +15,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        rust: [nightly, beta, stable]
+        os: [ubuntu-latest]
+        rust: [nightly, stable]
 
     steps:
     - uses: actions/checkout@master
@@ -52,6 +52,13 @@ jobs:
         toolchain: ${{matrix.rust}}
         command: fmt
         args: --all -- --check
+        
+    - name: build
+      uses: actions-rs/cargo@v1
+      with:
+        toolchain: ${{matrix.rust}}
+        command: build
+        args: --all --bins --tests --examples
 
     - name: check
       uses: actions-rs/cargo@v1
