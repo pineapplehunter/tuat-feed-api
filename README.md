@@ -1,3 +1,5 @@
+![CI](https://github.com/pineapplehunter/tuat-feed-api/workflows/CI/badge.svg)
+
 # tuat-feed-api
 
 you can access the api at `https://api.ihavenojob.work/tuat`
