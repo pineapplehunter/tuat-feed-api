@@ -67,7 +67,7 @@ jobs:
         command: check
         args: --all --bins --tests --examples
 
-    - name: check
+    - name: clippy
       uses: actions-rs/cargo@v1
       with:
         toolchain: ${{matrix.rust}}
