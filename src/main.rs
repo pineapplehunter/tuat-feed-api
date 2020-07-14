@@ -14,7 +14,10 @@ use tokio::runtime::Runtime;
 use tuat_feed_parser::{get_academic_feed, get_campus_feed, Info};
 
 /// Interval time (in minutes) for checking for new content.
+#[cfg(feature = "cache")]
 const INTERVAL_MIN: u64 = 15;
+#[cfg(not(feature = "cache"))]
+const INTERVAL_MIN: u64 = 0;
 
 /// Interval duration computed from `INTERVAL_MIN`.
 const INTERVAL: Duration = Duration::from_secs(INTERVAL_MIN * 60);

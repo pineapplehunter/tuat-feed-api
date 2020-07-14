@@ -12,6 +12,10 @@ members = [
     "tuat-feed-parser"
 ]
 
+[features]
+default = ["cache"]
+cache = []
+
 [dependencies]
 tuat-feed-parser={path="tuat-feed-parser"}
 #serde = {version="1.0.104",features=["derive"]}
