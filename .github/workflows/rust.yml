@@ -19,7 +19,7 @@ jobs:
         rust: [nightly, stable]
 
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@main
       
     - name: Install rust
       uses: actions-rs/toolchain@v1
