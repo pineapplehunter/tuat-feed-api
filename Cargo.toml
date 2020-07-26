@@ -17,10 +17,9 @@ default = ["cache"]
 cache = []
 
 [dependencies]
-tuat-feed-parser={path="tuat-feed-parser"}
-#serde = {version="1.0.104",features=["derive"]}
+tuat-feed-parser={ path = "tuat-feed-parser" }
 tide = "0.6.0"
-async-std = {version = "1.5.0", features = ["attributes"]}
-tokio = {version = "0.2.11", features = ["rt-core"], default-features = false}
+async-std = { version = "1.5.0", features = ["attributes"] }
+tokio = { version = "0.2.11", features = ["rt-core"], default-features = false }
 anyhow = "1.0.31"
 structopt = "0.3.14"
