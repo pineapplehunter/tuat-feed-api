@@ -1,4 +1,4 @@
-name: CI
+name: Check Build Test
 
 on:
   pull_request:
@@ -19,7 +19,7 @@ jobs:
         rust: [nightly, stable]
 
     steps:
-    - uses: actions/checkout@main
+    - uses: actions/checkout@v1
 
     - name: Cache cargo
       uses: actions/cache@v2
