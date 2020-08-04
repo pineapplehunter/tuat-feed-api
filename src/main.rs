@@ -164,6 +164,6 @@ async fn main() -> Result<()> {
         .context("could not resolve address")?;
     info!("start server on {}", address);
     warp::serve(routes).run(address).await;
-    
+
     Ok(())
 }
