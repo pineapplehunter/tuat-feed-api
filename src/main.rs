@@ -10,7 +10,6 @@ use std::env;
 use std::net::ToSocketAddrs;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use structopt::StructOpt;
 use tokio::sync::RwLock;
 use tokio::try_join;
 use tuat_feed_parser::{get_academic_feed, get_campus_feed, Info};
@@ -126,15 +125,6 @@ async fn handle_index(state: Arc<State>) -> Result<impl warp::Reply, warp::Rejec
         .map_err(|_e| warp::reject::reject())
 }
 
-#[derive(StructOpt, Debug)]
-#[structopt(name = "tuat feed api")]
-struct Opt {
-    #[structopt(short, long)]
-    port: u16,
-    #[structopt(short, long, default_value = "localhost")]
-    hostname: String,
-}
-
 #[tokio::main]
 /// the main server function
 async fn main() -> Result<()> {
@@ -143,7 +133,11 @@ async fn main() -> Result<()> {
     }
     env_logger::init();
 
-    let Opt { port, hostname, .. } = Opt::from_args();
+    let mut args = pico_args::Arguments::from_env();
+    let hostname = args
+        .opt_value_from_str("--hostname")?
+        .unwrap_or("localhost".to_string());
+    let port = args.opt_value_from_str("--port")?.unwrap_or(8888);
 
     let state = Arc::new(State::init().await?);
     let state = warp::any().map(move || state.clone());
