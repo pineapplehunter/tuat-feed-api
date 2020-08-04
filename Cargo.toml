@@ -6,19 +6,18 @@ edition = "2018"
 include = ["src/main.rs", "LICENSE", "README.md"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [workspace]
-members = [
-    "tuat-feed-parser"
-]
+members = ["tuat-feed-parser"]
 
 [features]
 default = ["cache"]
 cache = []
 
 [dependencies]
-tuat-feed-parser={ path = "tuat-feed-parser" }
-tokio = { version = "0.2.11", features = ["rt-core"], default-features = false }
+tuat-feed-parser = { path = "tuat-feed-parser" }
+tokio = { version = "0.2.11", features = ["macros"] }
 anyhow = "1.0.31"
 structopt = "0.3.14"
 warp = "0.2.4"
+env_logger = "0.7.1"
+log = "0.4.11"

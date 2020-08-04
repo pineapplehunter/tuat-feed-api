@@ -14,6 +14,8 @@ pub use get::{get, GetError};
 pub use info::Info;
 use parser::{info_parser, main_page_parser, ParseError};
 
+use log::info;
+
 const CAMPUS_FEED_URL: &str =
     "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=0&par=20&skip=0";
 const ACADEMIC_FEED_URL: &str =
@@ -35,6 +37,7 @@ pub enum TuatFeedParserError {
 
 /// get data from the campus feed
 pub async fn get_campus_feed() -> Result<Vec<Info>, TuatFeedParserError> {
+    info!("fetching campus feed");
     let content = get(CAMPUS_FEED_URL).await?;
     let ids = main_page_parser(&content).await?;
 
@@ -59,6 +62,7 @@ pub async fn get_campus_feed() -> Result<Vec<Info>, TuatFeedParserError> {
 
 /// get data from the academic feed
 pub async fn get_academic_feed() -> Result<Vec<Info>, TuatFeedParserError> {
+    info!("fetching academic feed");
     let content = get(ACADEMIC_FEED_URL).await?;
     let ids = main_page_parser(&content).await?;
 

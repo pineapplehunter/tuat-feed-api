@@ -4,14 +4,17 @@
 //!
 //! This is code for a server that formatsthe TUAT feed to json
 
-use anyhow::{anyhow, Result};
-use async_std::prelude::*;
-use std::sync::{Arc, RwLock};
+use anyhow::{Context, Result};
+use log::info;
+use std::env;
+use std::net::ToSocketAddrs;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 use structopt::StructOpt;
-use tide::{Request, Response};
-use tokio::runtime::Runtime;
+use tokio::sync::RwLock;
+use tokio::try_join;
 use tuat_feed_parser::{get_academic_feed, get_campus_feed, Info};
+use warp::Filter;
 
 /// Interval time (in minutes) for checking for new content.
 #[cfg(feature = "cache")]
@@ -26,24 +29,56 @@ const INTERVAL: Duration = Duration::from_secs(INTERVAL_MIN * 60);
 /// contains data for both academic and campus information.
 struct State {
     /// academic information.
-    academic: Arc<RwLock<InfoSection>>,
+    academic: RwLock<InfoSection>,
     /// campus information.
-    campus: Arc<RwLock<InfoSection>>,
+    campus: RwLock<InfoSection>,
 }
 
 impl State {
     /// initializes the state.
     /// fetches the data from tuat feed and stores it.
     async fn init() -> Result<Self> {
-        let (academic, campus) = get_academic_info().join(get_campus_info()).await;
+        info!("initializing state");
+        let (academic, campus) = try_join!(get_academic_feed(), get_campus_feed())?;
+        // let academic = get_academic_feed().await.context("academic")?;
+        // let campus = get_campus_feed().await.context("campus")?;
+
         Ok(Self {
-            academic: Arc::new(RwLock::new(InfoSection::new(
-                academic.map_err(|e| anyhow!("could not get academic info: {}", e))?,
-            ))),
-            campus: Arc::new(RwLock::new(InfoSection::new(
-                campus.map_err(|e| anyhow!("could not get campus info: {}", e))?,
-            ))),
+            academic: RwLock::new(InfoSection::new(academic)),
+            campus: RwLock::new(InfoSection::new(campus)),
         })
+    }
+
+    async fn get_academic(&self) -> Result<Vec<Info>> {
+        let update_academic = Instant::now() > self.academic.read().await.last_checked + INTERVAL;
+
+        if update_academic {
+            self.academic.write().await.set(get_academic_feed().await?);
+        }
+
+        let info = self.academic.read().await.info.clone();
+
+        Ok(info)
+    }
+
+    async fn get_campus(&self) -> Result<Vec<Info>> {
+        let update_campus = Instant::now() > self.campus.read().await.last_checked + INTERVAL;
+
+        if update_campus {
+            self.campus.write().await.set(get_academic_feed().await?);
+        }
+
+        let info = self.campus.read().await.info.clone();
+
+        Ok(info)
+    }
+
+    async fn get_all(&self) -> Result<Vec<Info>> {
+        let (mut academic, campus) = try_join!(self.get_academic(), self.get_campus())?;
+
+        academic.extend(campus);
+
+        Ok(academic)
     }
 }
 
@@ -73,101 +108,22 @@ impl InfoSection {
     }
 }
 
-/// this function get's the academic information from `tuat-feed-parser`
-async fn get_academic_info() -> Result<Vec<Info>> {
-    let mut rt = Runtime::new()?;
-    Ok(rt.block_on(async { get_academic_feed().await })?)
+async fn handle_academic(state: Arc<State>) -> Result<impl warp::Reply, warp::Rejection> {
+    let data = state.get_academic().await;
+    data.map(|data| warp::reply::json(&data))
+        .map_err(|_e| warp::reject::reject())
 }
 
-/// this function get's the campus information from `tuat-feed-parser`
-async fn get_campus_info() -> Result<Vec<Info>> {
-    let mut rt = Runtime::new()?;
-    Ok(rt.block_on(async { get_campus_feed().await })?)
+async fn handle_campus(state: Arc<State>) -> Result<impl warp::Reply, warp::Rejection> {
+    let data = state.get_campus().await;
+    data.map(|data| warp::reply::json(&data))
+        .map_err(|_e| warp::reject::reject())
 }
 
-/// handler for /
-async fn handle_index(req: Request<State>) -> Response {
-    let update_academic =
-        Instant::now() > req.state().academic.read().unwrap().last_checked + INTERVAL;
-    let update_campus = Instant::now() > req.state().campus.read().unwrap().last_checked + INTERVAL;
-
-    match (update_academic, update_campus) {
-        (true, true) => {
-            println!("fetching both");
-            let (data_academic, data_campus) = get_academic_info().join(get_campus_info()).await;
-            match data_academic {
-                Ok(data) => req.state().academic.write().unwrap().set(data),
-                Err(e) => return Response::new(400).body_string(format!("error:{}", e)),
-            }
-
-            match data_campus {
-                Ok(data) => req.state().campus.write().unwrap().set(data),
-                Err(e) => return Response::new(400).body_string(format!("error:{}", e)),
-            }
-        }
-        (true, false) => {
-            println!("fetching academic");
-            let data = get_academic_info().await;
-            match data {
-                Ok(data) => req.state().academic.write().unwrap().set(data),
-                Err(e) => return Response::new(400).body_string(format!("error:{}", e)),
-            }
-        }
-        (false, true) => {
-            println!("fetching campus");
-            let data = get_campus_info().await;
-            match data {
-                Ok(data) => req.state().campus.write().unwrap().set(data),
-                Err(e) => return Response::new(400).body_string(format!("error:{}", e)),
-            }
-        }
-        _ => {}
-    }
-
-    let res = req
-        .state()
-        .academic
-        .read()
-        .unwrap()
-        .info
-        .iter()
-        .chain(req.state().campus.read().unwrap().info.iter())
-        .cloned()
-        .collect::<Vec<Info>>();
-
-    Response::new(200).body_json(&res).unwrap()
-}
-
-/// handler for /campus
-async fn handle_campus(req: Request<State>) -> Response {
-    if Instant::now() > req.state().campus.read().unwrap().last_checked + INTERVAL {
-        println!("fetching campus");
-        let data = get_campus_info().await;
-        match data {
-            Ok(data) => req.state().campus.write().unwrap().set(data),
-            Err(e) => return Response::new(400).body_string(format!("error:{}", e)),
-        }
-    }
-
-    Response::new(200)
-        .body_json(&req.state().campus.read().unwrap().info)
-        .unwrap()
-}
-
-/// handler for /academic
-async fn handle_academic(req: Request<State>) -> Response {
-    if Instant::now() > req.state().academic.read().unwrap().last_checked + INTERVAL {
-        println!("fetching academic");
-        let data = get_academic_info().await;
-        match data {
-            Ok(data) => req.state().academic.write().unwrap().set(data),
-            Err(e) => return Response::new(400).body_string(format!("error:{}", e)),
-        }
-    }
-
-    Response::new(200)
-        .body_json(&req.state().academic.read().unwrap().info)
-        .unwrap()
+async fn handle_index(state: Arc<State>) -> Result<impl warp::Reply, warp::Rejection> {
+    let data = state.get_all().await;
+    data.map(|data| warp::reply::json(&data))
+        .map_err(|_e| warp::reject::reject())
 }
 
 #[derive(StructOpt, Debug)]
@@ -179,18 +135,35 @@ struct Opt {
     hostname: String,
 }
 
-#[async_std::main]
+#[tokio::main]
 /// the main server function
 async fn main() -> Result<()> {
-    let Opt { port, hostname, .. } = Opt::from_args();
-    let mut app = tide::with_state(State::init().await?);
-    app.at("/").get(handle_index);
-    app.at("/campus").get(handle_campus);
-    app.at("/academic").get(handle_academic);
-    println!("server start!");
+    if env::var_os("RUST_LOG").is_none() {
+        env::set_var("RUST_LOG", "info");
+    }
+    env_logger::init();
 
-    app.listen((hostname.as_str(), port))
-        .await
-        .map_err(|e| anyhow!("could not start server: {}", e))?;
+    let Opt { port, hostname, .. } = Opt::from_args();
+
+    let state = Arc::new(State::init().await?);
+    let state = warp::any().map(move || state.clone());
+
+    let index = warp::any().and(state.clone()).and_then(handle_index);
+    let academic = warp::path("academic")
+        .and(state.clone())
+        .and_then(handle_academic);
+    let campus = warp::path("campus")
+        .and(state.clone())
+        .and_then(handle_campus);
+
+    let routes = warp::get().and(academic.or(campus).or(index));
+
+    let address = format!("{}:{}", hostname, port)
+        .to_socket_addrs()?
+        .next()
+        .context("could not resolve address")?;
+    info!("start server on {}", address);
+    warp::serve(routes).run(address).await;
+    
     Ok(())
 }
