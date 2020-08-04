@@ -8,8 +8,8 @@ edition = "2018"
 [dependencies]
 scraper = "0.11.0"
 serde = { version = "1.0.104", features = ["derive"] }
-reqwest = "0.10.1"
-futures = "0.3.4"
+reqwest = { version = "0.10.1", default-features = false }
+futures = { version = "0.3.4",default-features = false }
 thiserror = "1.0.18"
 log = "0.4.11"
 
