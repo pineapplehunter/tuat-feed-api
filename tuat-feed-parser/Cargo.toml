@@ -5,15 +5,13 @@ authors = ["Shogo Takata <pineapplehunter.daniel@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 scraper = "0.11.0"
-serde = {version="1.0.104", features=["derive"]}
-reqwest = "0.10.1"
-futures = "0.3.4"
+serde = { version = "1.0.104", features = ["derive"] }
+reqwest = { version = "0.10.1", default-features = false }
+futures = { version = "0.3.4",default-features = false }
 thiserror = "1.0.18"
+log = "0.4.11"
 
 [dev-dependencies]
-tokio = {version="0.2.21",features=["full"]}
-
-
+tokio = { version = "0.2.22", features = ["macros"] }
