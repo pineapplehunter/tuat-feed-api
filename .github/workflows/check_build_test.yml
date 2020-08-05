@@ -82,7 +82,7 @@ jobs:
         args: --all
     
     - name: clean cache
-      uses: actrion-rs/install@v0.1
+      uses: actions-rs/install@v0.1
       with:
         crate: cargo-cache
         version: latest
