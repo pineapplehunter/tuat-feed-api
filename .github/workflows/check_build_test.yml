@@ -29,8 +29,6 @@ jobs:
           ~/.cargo/git
           target
         key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-        restore-keys: |
-          ${{ matrix.os }}-${{ matrix.rust }}-cargo-
           
     - name: Install rust
       uses: actions-rs/toolchain@v1
