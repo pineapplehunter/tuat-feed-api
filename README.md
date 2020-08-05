@@ -1,6 +1,6 @@
-![CI](https://github.com/pineapplehunter/tuat-feed-api/workflows/CI/badge.svg)
-
 # 農工大WEB掲示板API
+
+![CI](https://github.com/pineapplehunter/tuat-feed-api/workflows/CI/badge.svg)
 
 ここからアクセスできます `https://api.ihavenojob.work/tuat`
 
