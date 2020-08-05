@@ -48,6 +48,7 @@ impl State {
         })
     }
 
+    /// updates and gets academic info
     async fn get_academic(&self) -> Result<Vec<Info>> {
         let update_academic = Instant::now() > self.academic.read().await.last_checked + INTERVAL;
 
@@ -60,6 +61,7 @@ impl State {
         Ok(info)
     }
 
+    /// updates and gets capmus info
     async fn get_campus(&self) -> Result<Vec<Info>> {
         let update_campus = Instant::now() > self.campus.read().await.last_checked + INTERVAL;
 
@@ -72,6 +74,7 @@ impl State {
         Ok(info)
     }
 
+    /// gets all info
     async fn get_all(&self) -> Result<Vec<Info>> {
         let (mut academic, campus) = try_join!(self.get_academic(), self.get_campus())?;
 
@@ -107,18 +110,21 @@ impl InfoSection {
     }
 }
 
+/// handle /academic
 async fn handle_academic(state: Arc<State>) -> Result<impl warp::Reply, warp::Rejection> {
     let data = state.get_academic().await;
     data.map(|data| warp::reply::json(&data))
         .map_err(|_e| warp::reject::reject())
 }
 
+/// handle /campus
 async fn handle_campus(state: Arc<State>) -> Result<impl warp::Reply, warp::Rejection> {
     let data = state.get_campus().await;
     data.map(|data| warp::reply::json(&data))
         .map_err(|_e| warp::reject::reject())
 }
 
+/// handle /
 async fn handle_index(state: Arc<State>) -> Result<impl warp::Reply, warp::Rejection> {
     let data = state.get_all().await;
     data.map(|data| warp::reply::json(&data))
@@ -128,20 +134,24 @@ async fn handle_index(state: Arc<State>) -> Result<impl warp::Reply, warp::Rejec
 #[tokio::main]
 /// the main server function
 async fn main() -> Result<()> {
+    // if env is not set then default to RUST_LOG=info
     if env::var_os("RUST_LOG").is_none() {
         env::set_var("RUST_LOG", "info");
     }
     env_logger::init();
 
+    // parse args
     let mut args = pico_args::Arguments::from_env();
     let hostname = args
         .opt_value_from_str("--hostname")?
         .unwrap_or("localhost".to_string());
     let port = args.opt_value_from_str("--port")?.unwrap_or(8888);
 
+    // crate state
     let state = Arc::new(State::init().await?);
     let state = warp::any().map(move || state.clone());
 
+    // paths
     let index = warp::any().and(state.clone()).and_then(handle_index);
     let academic = warp::path("academic")
         .and(state.clone())
@@ -149,13 +159,15 @@ async fn main() -> Result<()> {
     let campus = warp::path("campus")
         .and(state.clone())
         .and_then(handle_campus);
-
     let routes = warp::get().and(academic.or(campus).or(index));
 
+    // parse address
     let address = format!("{}:{}", hostname, port)
         .to_socket_addrs()?
         .next()
         .context("could not resolve address")?;
+
+    // start server
     info!("start server on {}", address);
     warp::serve(routes).run(address).await;
 
