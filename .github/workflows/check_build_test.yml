@@ -81,14 +81,13 @@ jobs:
         command: test
         args: --all
     
-    - name: install cargo-cache
+    - name: clean cache
       uses: actrion-rs/install@v0.1
       with:
         crate: cargo-cache
         version: latest
         use-tool-cache: true
-
-    - name: clean cache
-      run: |
+      
+    - run: |
         cargo cache --autoclean
         cargo clean-unref
