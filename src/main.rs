@@ -9,127 +9,23 @@ use log::info;
 use std::env;
 use std::net::ToSocketAddrs;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
-use tokio::sync::RwLock;
-use tokio::try_join;
-use tuat_feed_parser::{get_academic_feed, get_campus_feed, Info};
+use std::time::Duration;
 use warp::Filter;
+
+mod state;
+use state::State;
+mod handler;
+pub(crate) mod info_section;
+use handler::{handle_academic, handle_campus, handle_index};
 
 /// Interval time (in minutes) for checking for new content.
 #[cfg(feature = "cache")]
-const INTERVAL_MIN: u64 = 15;
+pub(crate) const INTERVAL_MIN: u64 = 15;
 #[cfg(not(feature = "cache"))]
-const INTERVAL_MIN: u64 = 0;
+pub(crate) const INTERVAL_MIN: u64 = 0;
 
 /// Interval duration computed from `INTERVAL_MIN`.
 const INTERVAL: Duration = Duration::from_secs(INTERVAL_MIN * 60);
-
-/// State of the server.
-/// contains data for both academic and campus information.
-struct State {
-    /// academic information.
-    academic: RwLock<InfoSection>,
-    /// campus information.
-    campus: RwLock<InfoSection>,
-}
-
-impl State {
-    /// initializes the state.
-    /// fetches the data from tuat feed and stores it.
-    async fn init() -> Result<Self> {
-        info!("initializing state");
-        let (academic, campus) = try_join!(get_academic_feed(), get_campus_feed())?;
-        // let academic = get_academic_feed().await.context("academic")?;
-        // let campus = get_campus_feed().await.context("campus")?;
-
-        Ok(Self {
-            academic: RwLock::new(InfoSection::new(academic)),
-            campus: RwLock::new(InfoSection::new(campus)),
-        })
-    }
-
-    /// updates and gets academic info
-    async fn get_academic(&self) -> Result<Vec<Info>> {
-        let update_academic = Instant::now() > self.academic.read().await.last_checked + INTERVAL;
-
-        if update_academic {
-            self.academic.write().await.set(get_academic_feed().await?);
-        }
-
-        let info = self.academic.read().await.info.clone();
-
-        Ok(info)
-    }
-
-    /// updates and gets capmus info
-    async fn get_campus(&self) -> Result<Vec<Info>> {
-        let update_campus = Instant::now() > self.campus.read().await.last_checked + INTERVAL;
-
-        if update_campus {
-            self.campus.write().await.set(get_academic_feed().await?);
-        }
-
-        let info = self.campus.read().await.info.clone();
-
-        Ok(info)
-    }
-
-    /// gets all info
-    async fn get_all(&self) -> Result<Vec<Info>> {
-        let (mut academic, campus) = try_join!(self.get_academic(), self.get_campus())?;
-
-        academic.extend(campus);
-
-        Ok(academic)
-    }
-}
-
-/// InfoSection.
-/// This struct holds the information and when it was last checked.
-struct InfoSection {
-    /// the time the information was last checked.
-    last_checked: Instant,
-    /// actual information.
-    info: Vec<Info>,
-}
-
-impl InfoSection {
-    /// creates a new InfoSection from a `Vec<Info>`.
-    fn new(info: Vec<Info>) -> Self {
-        InfoSection {
-            info,
-            last_checked: Instant::now(),
-        }
-    }
-
-    /// set a new state.
-    /// (used for updating the information)
-    fn set(&mut self, info: Vec<Info>) {
-        self.info = info;
-        self.last_checked = Instant::now();
-    }
-}
-
-/// handle /academic
-async fn handle_academic(state: Arc<State>) -> Result<impl warp::Reply, warp::Rejection> {
-    let data = state.get_academic().await;
-    data.map(|data| warp::reply::json(&data))
-        .map_err(|_e| warp::reject::reject())
-}
-
-/// handle /campus
-async fn handle_campus(state: Arc<State>) -> Result<impl warp::Reply, warp::Rejection> {
-    let data = state.get_campus().await;
-    data.map(|data| warp::reply::json(&data))
-        .map_err(|_e| warp::reject::reject())
-}
-
-/// handle /
-async fn handle_index(state: Arc<State>) -> Result<impl warp::Reply, warp::Rejection> {
-    let data = state.get_all().await;
-    data.map(|data| warp::reply::json(&data))
-        .map_err(|_e| warp::reject::reject())
-}
 
 #[tokio::main]
 /// the main server function
