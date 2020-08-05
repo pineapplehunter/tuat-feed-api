@@ -90,4 +90,4 @@ jobs:
       
     - run: |
         cargo cache --autoclean
-        cargo clean-unref
+        cargo cache clean-unref
