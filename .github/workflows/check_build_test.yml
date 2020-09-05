@@ -3,11 +3,12 @@ name: Check Build Test
 on:
   pull_request:
   push:
-    branches:
+    branches: 
       - main
 
 env:
   RUSTFLAGS: -Dwarnings
+  CARGO_TERM_COLOR: always
 
 jobs:
   build_and_test:
@@ -16,7 +17,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        rust: [nightly, stable]
+        rust: [stable, nightly]
 
     steps:
     - uses: actions/checkout@v1
