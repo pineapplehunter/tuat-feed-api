@@ -3,11 +3,11 @@ name: Check Build Test
 on:
   pull_request:
   push:
-    branches:
-      - $default-branch
+    branches: [$default-branch]
 
 env:
   RUSTFLAGS: -Dwarnings
+  CARGO_TERM_COLOR: always
 
 jobs:
   build_and_test:
