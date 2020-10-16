@@ -32,11 +32,11 @@ const INTERVAL: Duration = Duration::from_secs(INTERVAL_MIN * 60);
 /// tuat feed api server
 struct Args {
     /// the hostname
-    #[argh(option)]
-    hostname: Option<String>,
+    #[argh(option, default = "String::from(\"localhost\")")]
+    hostname: String,
     /// the port
-    #[argh(option)]
-    port: Option<u16>,
+    #[argh(option, default = "8888")]
+    port: u16,
 }
 
 #[tokio::main]
@@ -50,8 +50,6 @@ async fn main() -> Result<()> {
 
     // parse args
     let args: Args = argh::from_env();
-    let hostname = args.hostname.unwrap_or("localhost".to_string());
-    let port = args.port.unwrap_or(8888);
 
     // crate state
     let state = Arc::new(State::init().await?);
@@ -68,7 +66,7 @@ async fn main() -> Result<()> {
     let routes = warp::get().and(academic.or(campus).or(index));
 
     // parse address
-    let address = format!("{}:{}", hostname, port)
+    let address = format!("{}:{}", args.hostname, args.port)
         .to_socket_addrs()?
         .next()
         .context("could not resolve address")?;
