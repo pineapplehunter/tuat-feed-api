@@ -5,6 +5,7 @@
 //! This is code for a server that formatsthe TUAT feed to json
 
 use anyhow::{Context, Result};
+use argh::FromArgs;
 use log::info;
 use std::env;
 use std::net::ToSocketAddrs;
@@ -27,6 +28,17 @@ pub(crate) const INTERVAL_MIN: u64 = 0;
 /// Interval duration computed from `INTERVAL_MIN`.
 const INTERVAL: Duration = Duration::from_secs(INTERVAL_MIN * 60);
 
+#[derive(FromArgs)]
+/// tuat feed api server
+struct Args {
+    /// the hostname
+    #[argh(option)]
+    hostname: Option<String>,
+    /// the port
+    #[argh(option)]
+    port: Option<u16>,
+}
+
 #[tokio::main]
 /// the main server function
 async fn main() -> Result<()> {
@@ -37,11 +49,9 @@ async fn main() -> Result<()> {
     env_logger::init();
 
     // parse args
-    let mut args = pico_args::Arguments::from_env();
-    let hostname = args
-        .opt_value_from_str("--hostname")?
-        .unwrap_or("localhost".to_string());
-    let port = args.opt_value_from_str("--port")?.unwrap_or(8888);
+    let args: Args = argh::from_env();
+    let hostname = args.hostname.unwrap_or("localhost".to_string());
+    let port = args.port.unwrap_or(8888);
 
     // crate state
     let state = Arc::new(State::init().await?);
