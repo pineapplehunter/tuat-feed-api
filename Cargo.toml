@@ -15,9 +15,9 @@ cache = []
 
 [dependencies]
 tuat-feed-parser = { path = "tuat-feed-parser" }
-tokio = { version = "0.2", features = ["macros"] }
-anyhow = "1.0"
-warp = { version = "0.2", default-features = false }
-env_logger = "0.8"
-log = "0.4"
-argh = "0.1.3"
+tokio = { version = "0.2.24", features = ["macros"] }
+anyhow = "1.0.35"
+warp = { version = "0.2.5", default-features = false }
+env_logger ="0.8.2"
+log = "0.4.11"
+argh = "0.1.4"
