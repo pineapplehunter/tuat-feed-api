@@ -36,7 +36,7 @@ mod test {
     use crate::Info;
     use std::collections::HashMap;
 
-    #[tokio::test]
+    #[async_std::test]
     async fn info_parse() {
         let info: Info = info_parser(&TEST_DATA.to_string(), 8000).await.unwrap();
 

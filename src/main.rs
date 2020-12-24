@@ -4,14 +4,13 @@
 //!
 //! This is code for a server that formatsthe TUAT feed to json
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use argh::FromArgs;
 use log::info;
 use std::env;
 use std::net::ToSocketAddrs;
 use std::sync::Arc;
 use std::time::Duration;
-use warp::Filter;
 
 mod state;
 use state::State;
@@ -39,7 +38,7 @@ struct Args {
     port: u16,
 }
 
-#[tokio::main]
+#[async_std::main]
 /// the main server function
 async fn main() -> Result<()> {
     // if env is not set then default to RUST_LOG=info
@@ -51,19 +50,24 @@ async fn main() -> Result<()> {
     // parse args
     let args: Args = argh::from_env();
 
-    // crate state
-    let state = Arc::new(State::init().await?);
-    let state = warp::any().map(move || state.clone());
+    // // crate state
+    // let state = Arc::new(State::init().await?);
+    // let state = warp::any().map(move || state.clone());
 
-    // paths
-    let index = warp::any().and(state.clone()).and_then(handle_index);
-    let academic = warp::path("academic")
-        .and(state.clone())
-        .and_then(handle_academic);
-    let campus = warp::path("campus")
-        .and(state.clone())
-        .and_then(handle_campus);
-    let routes = warp::get().and(academic.or(campus).or(index));
+    // // paths
+    // let index = warp::any().and(state.clone()).and_then(handle_index);
+    // let academic = warp::path("academic")
+    //     .and(state.clone())
+    //     .and_then(handle_academic);
+    // let campus = warp::path("campus")
+    //     .and(state.clone())
+    //     .and_then(handle_campus);
+    // let routes = warp::get().and(academic.or(campus).or(index));
+
+    let mut app = tide::with_state(Arc::new(State::init().await?));
+    app.at("/").get(handle_index);
+    app.at("/academic").get(handle_academic);
+    app.at("/campus").get(handle_campus);
 
     // parse address
     let address = format!("{}:{}", args.hostname, args.port)
@@ -73,7 +77,6 @@ async fn main() -> Result<()> {
 
     // start server
     info!("start server on {}", address);
-    warp::serve(routes).run(address).await;
-
-    Ok(())
+    // warp::serve(routes).run(address).await;
+    app.listen(address).await.map_err(|e| anyhow!(e))
 }

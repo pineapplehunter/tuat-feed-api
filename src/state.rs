@@ -1,8 +1,9 @@
 use anyhow::Result;
 use log::info;
 use std::time::Instant;
-use tokio::sync::RwLock;
-use tokio::try_join;
+
+use async_std::sync::RwLock;
+use futures::try_join;
 
 use tuat_feed_parser::{get_academic_feed, get_campus_feed, Info};
 
@@ -42,7 +43,6 @@ impl State {
         }
 
         let info = self.academic.read().await.info.clone();
-
         Ok(info)
     }
 
@@ -55,16 +55,13 @@ impl State {
         }
 
         let info = self.campus.read().await.info.clone();
-
         Ok(info)
     }
 
     /// gets all info
     pub async fn get_all(&self) -> Result<Vec<Info>> {
         let (mut academic, campus) = try_join!(self.get_academic(), self.get_campus())?;
-
         academic.extend(campus);
-
         Ok(academic)
     }
 }
