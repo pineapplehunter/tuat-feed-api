@@ -31,10 +31,10 @@ const INTERVAL: Duration = Duration::from_secs(INTERVAL_MIN * 60);
 /// tuat feed api server
 struct Args {
     /// the hostname
-    #[argh(option, default = "String::from(\"localhost\")")]
+    #[argh(option, short = 'h', default = "String::from(\"localhost\")")]
     hostname: String,
     /// the port
-    #[argh(option, default = "8888")]
+    #[argh(option, short = 'p', default = "8888")]
     port: u16,
 }
 
@@ -43,26 +43,12 @@ struct Args {
 async fn main() -> Result<()> {
     // if env is not set then default to RUST_LOG=info
     if env::var_os("RUST_LOG").is_none() {
-        env::set_var("RUST_LOG", "info");
+        env::set_var("RUST_LOG", "tuat_feed_api=info,tuat_feed_parser=info");
     }
     env_logger::init();
 
     // parse args
     let args: Args = argh::from_env();
-
-    // // crate state
-    // let state = Arc::new(State::init().await?);
-    // let state = warp::any().map(move || state.clone());
-
-    // // paths
-    // let index = warp::any().and(state.clone()).and_then(handle_index);
-    // let academic = warp::path("academic")
-    //     .and(state.clone())
-    //     .and_then(handle_academic);
-    // let campus = warp::path("campus")
-    //     .and(state.clone())
-    //     .and_then(handle_campus);
-    // let routes = warp::get().and(academic.or(campus).or(index));
 
     let mut app = tide::with_state(Arc::new(State::init().await?));
     app.at("/").get(handle_index);
