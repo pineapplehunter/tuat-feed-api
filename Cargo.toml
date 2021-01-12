@@ -15,11 +15,11 @@ cache = []
 
 [dependencies]
 tuat-feed-parser = { path = "tuat-feed-parser" }
-anyhow = "1.0.36"
+anyhow = "1.0.38"
 env_logger = "0.8.2"
-log = "0.4.11"
+log = "0.4.13"
 argh = "0.1.4"
 async-std = { version = "1.8.0", features = ["attributes"] }
 tide = "0.15.0"
-serde_json = "1.0.60"
-futures = "0.3.8"
+serde_json = "1.0.61"
+futures-util = "0.3.9"

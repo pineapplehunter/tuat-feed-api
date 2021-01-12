@@ -2,7 +2,7 @@
 
 //! # tuat-feed-api(TUAT Feed API Server)
 //!
-//! This is code for a server that formatsthe TUAT feed to json
+//! This is code for a server that formats the TUAT feed to json
 
 use anyhow::{anyhow, Context, Result};
 use argh::FromArgs;

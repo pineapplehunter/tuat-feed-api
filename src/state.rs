@@ -3,7 +3,7 @@ use log::info;
 use std::time::Instant;
 
 use async_std::sync::RwLock;
-use futures::try_join;
+use futures_util::try_join;
 
 use tuat_feed_parser::{get_academic_feed, get_campus_feed, Info};
 
@@ -25,8 +25,6 @@ impl State {
     pub async fn init() -> Result<Self> {
         info!("initializing state");
         let (academic, campus) = try_join!(get_academic_feed(), get_campus_feed())?;
-        // let academic = get_academic_feed().await.context("academic")?;
-        // let campus = get_campus_feed().await.context("campus")?;
 
         Ok(Self {
             academic: RwLock::new(InfoSection::new(academic)),

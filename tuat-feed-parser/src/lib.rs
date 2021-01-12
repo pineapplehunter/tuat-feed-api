@@ -3,7 +3,7 @@
 //! # tuat-feed-parser
 //! this crate provides a api to access the tuat feed as a struct.
 
-use futures::stream::{self, StreamExt};
+use futures_util::stream::{self, StreamExt};
 use thiserror::Error;
 
 mod get;
