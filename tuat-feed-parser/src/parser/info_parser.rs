@@ -31,14 +31,14 @@ pub async fn info_parser(content: &str, id: u32) -> Result<Info, ParseError> {
 
 #[cfg(test)]
 mod test {
-    const TEST_DATA: &'static str = include_str!("info_test_data.html");
+    const TEST_DATA: &'static str = include_str!("../../test_assets/test_info.html");
     use super::info_parser;
     use crate::Info;
     use std::collections::HashMap;
 
     #[tokio::test]
     async fn info_parse() {
-        let info: Info = info_parser(&TEST_DATA.to_string(), 8000).await.unwrap();
+        let info: Info = info_parser(TEST_DATA, 8000).await.unwrap();
 
         let mut correct = HashMap::<String, String>::new();
         correct.insert("カテゴリー".into(), "休講・補講".into());
