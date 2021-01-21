@@ -31,10 +31,10 @@ const INTERVAL: Duration = Duration::from_secs(INTERVAL_MIN * 60);
 #[derive(FromArgs)]
 /// tuat feed api server
 struct Args {
-    /// the hostname
+    /// hostname
     #[argh(option, default = "String::from(\"localhost\")")]
     hostname: String,
-    /// the port
+    /// port
     #[argh(option, default = "8888")]
     port: u16,
 }

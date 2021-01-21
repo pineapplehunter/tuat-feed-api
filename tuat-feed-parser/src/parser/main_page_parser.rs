@@ -12,7 +12,7 @@ pub async fn main_page_parser(content: &str) -> Result<Vec<u32>, ParseError> {
         let id = info
             .value()
             .attr("i")
-            .ok_or_else(|| ParseError::ScrappingError("could not find attr 'i'".into()))?
+            .ok_or_else(|| ParseError::ScrapingError("could not find attr 'i'".into()))?
             .parse::<u32>()?;
         ids.push(id);
     }
