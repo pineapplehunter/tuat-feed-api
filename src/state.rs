@@ -1,13 +1,12 @@
 use anyhow::Result;
 use log::info;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use tokio::try_join;
 
 use tuat_feed_parser::{get_academic_feed, get_campus_feed, Info};
 
 use crate::info_section::InfoSection;
-use crate::INTERVAL;
 
 /// State of the server.
 /// contains data for both academic and campus information.
@@ -16,12 +15,14 @@ pub struct State {
     academic: RwLock<InfoSection>,
     /// campus information.
     campus: RwLock<InfoSection>,
+    /// interval to refresh
+    interval: Duration,
 }
 
 impl State {
     /// initializes the state.
     /// fetches the data from tuat feed and stores it.
-    pub async fn init() -> Result<Self> {
+    pub async fn init(interval: Duration) -> Result<Self> {
         info!("initializing state");
         let (academic, campus) = try_join!(get_academic_feed(), get_campus_feed())?;
         // let academic = get_academic_feed().await.context("academic")?;
@@ -30,12 +31,14 @@ impl State {
         Ok(Self {
             academic: RwLock::new(InfoSection::new(academic)),
             campus: RwLock::new(InfoSection::new(campus)),
+            interval,
         })
     }
 
     /// updates and gets academic info
     pub async fn get_academic(&self) -> Result<Vec<Info>> {
-        let update_academic = Instant::now() > self.academic.read().await.last_checked + INTERVAL;
+        let update_academic =
+            Instant::now() > self.academic.read().await.last_checked + self.interval;
 
         if update_academic {
             self.academic.write().await.set(get_academic_feed().await?);
@@ -48,7 +51,7 @@ impl State {
 
     /// updates and gets capmus info
     pub async fn get_campus(&self) -> Result<Vec<Info>> {
-        let update_campus = Instant::now() > self.campus.read().await.last_checked + INTERVAL;
+        let update_campus = Instant::now() > self.campus.read().await.last_checked + self.interval;
 
         if update_campus {
             self.campus.write().await.set(get_academic_feed().await?);
@@ -66,5 +69,13 @@ impl State {
         academic.extend(campus);
 
         Ok(academic)
+    }
+
+    pub fn init_with_data(academic: InfoSection, campus: InfoSection, interval: Duration) -> State {
+        Self {
+            academic: RwLock::new(academic),
+            campus: RwLock::new(campus),
+            interval,
+        }
     }
 }

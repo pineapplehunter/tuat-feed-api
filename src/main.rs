@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-
 //! # tuat-feed-api(TUAT Feed API Server)
 //!
 //! This is code for a server that formatsthe TUAT feed to json
@@ -11,13 +9,11 @@ use std::env;
 use std::net::ToSocketAddrs;
 use std::sync::Arc;
 use std::time::Duration;
+use tuat_feed_api::{
+    handler::{handle_academic, handle_campus, handle_index},
+    State,
+};
 use warp::Filter;
-
-mod state;
-use state::State;
-mod handler;
-pub(crate) mod info_section;
-use handler::{handle_academic, handle_campus, handle_index};
 
 /// Interval time (in minutes) for checking for new content.
 #[cfg(feature = "cache")]
@@ -52,17 +48,22 @@ async fn main() -> Result<()> {
     let args: Args = argh::from_env();
 
     // crate state
-    let state = Arc::new(State::init().await?);
+    let state = Arc::new(State::init(INTERVAL).await?);
     let state = warp::any().map(move || state.clone());
 
     // paths
-    let index = warp::any().and(state.clone()).and_then(handle_index);
+    let index = warp::any()
+        .and(state.clone())
+        .and_then(handle_index)
+        .map(|data| warp::reply::json(&data));
     let academic = warp::path("academic")
         .and(state.clone())
-        .and_then(handle_academic);
+        .and_then(handle_academic)
+        .map(|data| warp::reply::json(&data));
     let campus = warp::path("campus")
         .and(state.clone())
-        .and_then(handle_campus);
+        .and_then(handle_campus)
+        .map(|data| warp::reply::json(&data));
     let routes = warp::get().and(academic.or(campus).or(index));
 
     // parse address
