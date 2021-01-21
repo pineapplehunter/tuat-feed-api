@@ -72,14 +72,7 @@ jobs:
         toolchain: ${{matrix.rust}}
         command: test
         args: --all
-    
-    - name: clean cache
-      uses: actions-rs/install@v0.1
-      with:
-        crate: cargo-cache
-        version: latest
-        use-tool-cache: true
       
     - run: |
-        cargo cache --autoclean
-        cargo cache clean-unref
+        cargo install cargo-cache --no-default-features --features ci-autoclean
+        cargo cache
