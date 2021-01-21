@@ -1,4 +1,4 @@
-// #![warn(missing_docs)]
+#![warn(missing_docs)]
 
 //! # tuat-feed-api(TUAT Feed API Server library)
 //!
@@ -7,5 +7,8 @@
 
 mod state;
 pub use state::State;
+
+/// holds handlers to each path
 pub mod handler;
+/// a place to store data for a category
 pub mod info_section;
