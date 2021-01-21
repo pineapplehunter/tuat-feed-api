@@ -10,7 +10,7 @@ pub use main_page_parser::main_page_parser;
 pub enum ParseError {
     /// an error that happens when scraping
     #[error("scraping error")]
-    ScrappingError(String),
+    ScrapingError(String),
     /// when parsing an invalid int
     #[error("int parse error")]
     IntParseError(#[from] std::num::ParseIntError),

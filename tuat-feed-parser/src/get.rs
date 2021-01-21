@@ -3,7 +3,7 @@ use thiserror::Error;
 /// the error that happens when accessing the internet
 #[derive(Error, Debug)]
 pub enum GetError {
-    /// wehn there is a problem regarding networking
+    /// when there is a problem regarding networking
     #[error("internet connention error")]
     ConnectionError(#[from] reqwest::Error),
     /// when it can't get the text

@@ -20,7 +20,7 @@ const CAMPUS_FEED_URL: &str =
     "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=0&par=20&skip=0";
 const ACADEMIC_FEED_URL: &str =
     "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=1&par=20&skip=0";
-static INFO_URL_BASE: &str = "http://t-board.office.tuat.ac.jp/T/boar/vewAjax.php?i=";
+const INFO_URL_BASE: &str = "http://t-board.office.tuat.ac.jp/T/boar/vewAjax.php?i=";
 
 const BUFFERED_NUM: usize = 10;
 
