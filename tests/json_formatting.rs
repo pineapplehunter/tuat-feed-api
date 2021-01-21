@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::{clone, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 
 use tuat_feed_api::State;
 use tuat_feed_api::{
@@ -8,8 +8,6 @@ use tuat_feed_api::{
 };
 use tuat_feed_parser::Info;
 use warp::Filter;
-
-use warp::reply::{json, Json};
 
 fn dummy_info(id: u32) -> Info {
     let mut data = HashMap::new();
@@ -22,7 +20,7 @@ fn dummy_state() -> Arc<State> {
     let academic = InfoSection::new(vec![dummy_info(0), dummy_info(1)]);
     let campus = InfoSection::new(vec![dummy_info(10), dummy_info(11)]);
     let interval = Duration::from_secs(10000000);
-    Arc::new(State::init_with_data(academic, campus, interval))
+    Arc::new(State::set_all(academic, campus, interval))
 }
 
 #[tokio::test]
