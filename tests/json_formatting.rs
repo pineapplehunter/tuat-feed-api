@@ -106,3 +106,33 @@ async fn check_json_formatting_campus() {
         }
     }
 }
+
+#[should_panic]
+#[tokio::test]
+async fn check_json_formatting_index_panic() {
+    let state = dummy_state();
+    let state = warp::any().map(move || state.clone());
+    let filter = warp::get().and(state.clone()).and_then(handle_index);
+
+    let output: Vec<Info> = warp::test::request()
+        .path("/")
+        .filter(&filter)
+        .await
+        .unwrap();
+
+    // not enough.
+    let correct_outputs = [dummy_info(10), dummy_info(11)];
+
+    for out in output {
+        let mut flg = true;
+        for correct in correct_outputs.iter() {
+            if &out == correct {
+                flg = false;
+                break;
+            }
+        }
+        if flg {
+            panic!("output {} did not match any correct outputs");
+        }
+    }
+}
