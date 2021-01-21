@@ -3,7 +3,7 @@ name: Check and test
 on:
   pull_request:
   push:
-    branches: 
+    branches:
       - main
 
 env:
@@ -20,60 +20,64 @@ jobs:
         rust: [stable]
 
     steps:
-    - uses: actions/checkout@v1
+      - uses: actions/checkout@v1
 
-    - name: Cache cargo
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-          
-    - name: Install rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: ${{matrix.rust}}
-        override: true
-        components: rustfmt, clippy
-    
-    - name: fmt
-      uses: actions-rs/cargo@v1
-      with:
-        toolchain: ${{matrix.rust}}
-        command: fmt
-        args: --all -- --check
+      - name: Cache cargo
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.toml') }}
 
-    - name: check
-      uses: actions-rs/cargo@v1
-      with:
-        toolchain: ${{matrix.rust}}
-        command: check
-        args: --all --bins --tests --examples
+      # for local use
+      - name: install gcc
+        run: "which gcc && which pkg-config && pkg-config --libs --cflags openssl || bash -c 'apt update && apt install -y gcc pkg-config libssl-dev'"
 
-    - name: clippy
-      uses: actions-rs/cargo@v1
-      with:
-        toolchain: ${{matrix.rust}}
-        command: clippy
-        args: --all
-    
-    - name: check no-default-features
-      uses: actions-rs/cargo@v1
-      with:
-        toolchain: ${{matrix.rust}}
-        command: check
-        args: --all --bins --tests --examples --no-default-features
+      - name: Install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{matrix.rust}}
+          override: true
+          components: rustfmt, clippy
 
-    - name: tests
-      uses: actions-rs/cargo@v1
-      with:
-        toolchain: ${{matrix.rust}}
-        command: test
-        args: --all
-      
-    - name: clean cache
-    - run: |
-        cargo install cargo-cache --no-default-features --features ci-autoclean
-        cargo cache
+      - name: fmt
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{matrix.rust}}
+          command: fmt
+          args: --all -- --check
+
+      - name: check
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{matrix.rust}}
+          command: check
+          args: --all --bins --tests --examples
+
+      - name: clippy
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{matrix.rust}}
+          command: clippy
+          args: --all
+
+      - name: check no-default-features
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{matrix.rust}}
+          command: check
+          args: --all --bins --tests --examples --no-default-features
+
+      - name: tests
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: ${{matrix.rust}}
+          command: test
+          args: --all
+
+      - name: clean cache
+        run: |
+          cargo install cargo-cache --no-default-features --features ci-autoclean
+          cargo cache
