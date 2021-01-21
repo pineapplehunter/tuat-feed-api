@@ -1,4 +1,4 @@
-name: Check Build Test
+name: Check and test
 
 on:
   pull_request:
@@ -11,8 +11,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build_and_test:
-    name: Build and test
+  check_and_test:
+    name: Check and test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -73,6 +73,7 @@ jobs:
         command: test
         args: --all
       
+    - name: clean cache
     - run: |
         cargo install cargo-cache --no-default-features --features ci-autoclean
         cargo cache
