@@ -71,7 +71,9 @@ impl State {
         Ok(academic)
     }
 
-    pub fn init_with_data(academic: InfoSection, campus: InfoSection, interval: Duration) -> State {
+    /// sets all values in struct.
+    /// this function was made for testing and should not be used in regular code.
+    pub fn set_all(academic: InfoSection, campus: InfoSection, interval: Duration) -> State {
         Self {
             academic: RwLock::new(academic),
             campus: RwLock::new(campus),
