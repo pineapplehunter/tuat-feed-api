@@ -73,6 +73,7 @@ impl State {
 
     /// sets all values in struct.
     /// this function was made for testing and should not be used in regular code.
+    #[doc(hidden)]
     pub fn set_all(academic: InfoSection, campus: InfoSection, interval: Duration) -> State {
         Self {
             academic: RwLock::new(academic),
