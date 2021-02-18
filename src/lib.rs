@@ -9,6 +9,6 @@ mod state;
 pub use state::State;
 
 /// holds handlers to each path
-pub mod handler;
+pub mod handlers;
 /// a place to store data for a category
 pub mod info_section;

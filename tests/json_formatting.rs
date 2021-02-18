@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Duration};
 
 use tuat_feed_api::State;
 use tuat_feed_api::{
-    handler::{handle_academic, handle_campus, handle_index},
+    handlers::v1::{handle_academic, handle_campus, handle_index},
     info_section::InfoSection,
 };
 use tuat_feed_parser::Info;
