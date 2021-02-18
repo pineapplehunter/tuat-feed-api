@@ -33,6 +33,7 @@ impl ResponseType {
     }
 }
 
+/// routes to v2 api
 pub fn v2_paths(state: BoxedFilter<(Arc<State>,)>) -> BoxedFilter<(impl Reply,)> {
     // paths
     let index = warp::any()
