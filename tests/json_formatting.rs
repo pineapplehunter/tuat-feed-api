@@ -46,7 +46,7 @@ async fn check_json_formatting_index() {
             }
         }
         if flg {
-            panic!("output {} did not match any correct outputs");
+            panic!("output {:?} did not match any correct outputs", out);
         }
     }
 }
@@ -74,7 +74,7 @@ async fn check_json_formatting_academic() {
             }
         }
         if flg {
-            panic!("output {} did not match any correct outputs");
+            panic!("output {:?} did not match any correct outputs", out);
         }
     }
 }
@@ -102,7 +102,7 @@ async fn check_json_formatting_campus() {
             }
         }
         if flg {
-            panic!("output {} did not match any correct outputs");
+            panic!("output {:?} did not match any correct outputs", out);
         }
     }
 }
@@ -132,7 +132,7 @@ async fn check_json_formatting_index_panic() {
             }
         }
         if flg {
-            panic!("output {} did not match any correct outputs");
+            panic!("output {:?} did not match any correct outputs", out);
         }
     }
 }
