@@ -10,7 +10,10 @@ use std::net::ToSocketAddrs;
 use std::sync::Arc;
 use std::time::Duration;
 use tuat_feed_api::{
-    handler::{handle_academic, handle_campus, handle_index},
+    handlers::{
+        v1::{handle_academic, handle_campus, handle_index},
+        v2,
+    },
     State,
 };
 use warp::Filter;
@@ -64,7 +67,13 @@ async fn main() -> Result<()> {
         .and(state.clone())
         .and_then(handle_campus)
         .map(|data| warp::reply::json(&data));
-    let routes = warp::get().and(academic.or(campus).or(index));
+
+    let routes = warp::get().and(
+        v2::v2_paths(state.clone().boxed())
+            .or(academic)
+            .or(campus)
+            .or(index),
+    );
 
     // parse address
     let address = format!("{}:{}", args.hostname, args.port)
