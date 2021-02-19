@@ -1,1 +1,1 @@
-api: cargo run -- --port $PORT
+api: ./target/release/tuat-feed-api --port $PORT
