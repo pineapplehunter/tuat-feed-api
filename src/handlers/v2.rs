@@ -6,6 +6,7 @@ use tuat_feed_parser::Info;
 use warp::{filters::BoxedFilter, Filter, Rejection, Reply};
 
 #[derive(Debug, PartialEq, Serialize)]
+#[serde(rename_all = "lowercase")]
 enum Status {
     Ok,
     Err(String),
