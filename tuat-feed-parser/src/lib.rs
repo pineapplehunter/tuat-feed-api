@@ -12,7 +12,7 @@ mod parser;
 
 pub use get::{get, GetError};
 pub use info::Info;
-use parser::{info_parser, main_page_parser, ParseError};
+use parser::{error::ParseError, info_parser, main_page_parser};
 
 use log::info;
 
