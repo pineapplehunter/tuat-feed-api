@@ -1,1 +1,0 @@
-api: ./target/release/tuat-feed-api --port $PORT

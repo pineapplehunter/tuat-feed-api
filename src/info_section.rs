@@ -12,16 +12,13 @@ pub struct InfoSection {
 
 impl InfoSection {
     /// creates a new InfoSection from a `Vec<Info>`.
-    pub fn new(info: Vec<Info>) -> Self {
-        InfoSection {
-            info,
-            last_checked: Instant::now(),
-        }
+    pub fn new(info: Vec<Info>, last_checked: Instant) -> Self {
+        InfoSection { info, last_checked }
     }
 
     /// set a new state.
     /// (used for updating the information)
-    pub fn set(&mut self, info: Vec<Info>) {
+    pub fn update(&mut self, info: Vec<Info>) {
         self.info = info;
         self.last_checked = Instant::now();
     }

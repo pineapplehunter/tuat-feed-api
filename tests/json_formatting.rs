@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::time::Instant;
 use std::{sync::Arc, time::Duration};
 
 use tuat_feed_api::State;
@@ -17,8 +18,8 @@ fn dummy_info(id: u32) -> Info {
 }
 
 fn dummy_state() -> Arc<State> {
-    let academic = InfoSection::new(vec![dummy_info(0), dummy_info(1)]);
-    let campus = InfoSection::new(vec![dummy_info(10), dummy_info(11)]);
+    let academic = InfoSection::new(vec![dummy_info(0), dummy_info(1)], Instant::now());
+    let campus = InfoSection::new(vec![dummy_info(10), dummy_info(11)], Instant::now());
     let interval = Duration::from_secs(10000000);
     Arc::new(State::set_all(academic, campus, interval))
 }

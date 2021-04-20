@@ -24,13 +24,10 @@ impl State {
     /// fetches the data from tuat feed and stores it.
     pub async fn init(interval: Duration) -> Result<Self> {
         info!("initializing state");
-        let (academic, campus) = try_join!(get_academic_feed(), get_campus_feed())?;
-        // let academic = get_academic_feed().await.context("academic")?;
-        // let campus = get_campus_feed().await.context("campus")?;
 
         Ok(Self {
-            academic: RwLock::new(InfoSection::new(academic)),
-            campus: RwLock::new(InfoSection::new(campus)),
+            academic: RwLock::new(InfoSection::new(Vec::new(), Instant::now() - interval)),
+            campus: RwLock::new(InfoSection::new(Vec::new(), Instant::now() - interval)),
             interval,
         })
     }
@@ -41,7 +38,7 @@ impl State {
             Instant::now() > self.academic.read().await.last_checked + self.interval;
 
         if update_academic {
-            self.academic.write().await.set(get_academic_feed().await?);
+            self.academic.write().await.update(get_academic_feed().await?);
         }
 
         let info = self.academic.read().await.info.clone();
@@ -54,7 +51,7 @@ impl State {
         let update_campus = Instant::now() > self.campus.read().await.last_checked + self.interval;
 
         if update_campus {
-            self.campus.write().await.set(get_academic_feed().await?);
+            self.campus.write().await.update(get_campus_feed().await?);
         }
 
         let info = self.campus.read().await.info.clone();
