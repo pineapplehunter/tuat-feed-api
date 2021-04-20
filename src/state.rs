@@ -38,7 +38,10 @@ impl State {
             Instant::now() > self.academic.read().await.last_checked + self.interval;
 
         if update_academic {
-            self.academic.write().await.update(get_academic_feed().await?);
+            self.academic
+                .write()
+                .await
+                .update(get_academic_feed().await?);
         }
 
         let info = self.academic.read().await.info.clone();
