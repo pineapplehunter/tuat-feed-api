@@ -15,7 +15,7 @@ cache = []
 
 [dependencies]
 tuat-feed-parser = { path = "tuat-feed-parser" }
-tokio = { version = "1.0.1", features = ["full"] }
+tokio = { version = "1.0.1", features = ["rt", "macros", "rt-multi-thread"] }
 serde = { version = "1.0.118", features = ["derive"] }
 anyhow = "1.0.35"
 warp = "0.3"

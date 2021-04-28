@@ -3,7 +3,7 @@
 //! # tuat-feed-parser
 //! this crate provides a api to access the tuat feed as a struct.
 
-use futures::stream::{self, StreamExt};
+use futures_util::stream::{self, StreamExt};
 use thiserror::Error;
 
 mod get;
@@ -44,13 +44,7 @@ pub async fn get_campus_feed() -> Result<Vec<Info>, TuatFeedParserError> {
     let informations: Vec<Info> = stream::iter(ids)
         .map(|id| async move { (get(&format!("{}{}", INFO_URL_BASE, id)).await, id) })
         .buffered(BUFFERED_NUM)
-        .filter_map(|(content, id)| async move {
-            if let Ok(content) = content {
-                Some((content, id))
-            } else {
-                None
-            }
-        })
+        .filter_map(|(content, id)| async move { content.ok().map(|content| (content, id)) })
         .map(|(content, id)| async move { info_parser(&content, id).await })
         .buffered(BUFFERED_NUM)
         .filter_map(|info| async move { info.ok() })
@@ -69,13 +63,7 @@ pub async fn get_academic_feed() -> Result<Vec<Info>, TuatFeedParserError> {
     let informations: Vec<Info> = stream::iter(ids)
         .map(|id| async move { (get(&format!("{}{}", INFO_URL_BASE, id)).await, id) })
         .buffered(BUFFERED_NUM)
-        .filter_map(|(content, id)| async move {
-            if let Ok(content) = content {
-                Some((content, id))
-            } else {
-                None
-            }
-        })
+        .filter_map(|(content, id)| async move { content.ok().map(|content| (content, id)) })
         .map(|(content, id)| async move { info_parser(&content, id).await })
         .buffered(BUFFERED_NUM)
         .filter_map(|info| async move { info.ok() })
