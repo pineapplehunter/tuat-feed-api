@@ -13,7 +13,7 @@ pub struct InfoSection {
 impl InfoSection {
     /// creates a new InfoSection from a `Vec<Info>`.
     pub fn new(info: Vec<Info>, last_checked: Instant) -> Self {
-        InfoSection { info, last_checked }
+        InfoSection { last_checked, info }
     }
 
     /// set a new state.

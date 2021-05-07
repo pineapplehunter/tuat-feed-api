@@ -48,7 +48,7 @@ pub fn v2_paths(state: BoxedFilter<(Arc<State>,)>) -> BoxedFilter<(impl Reply,)>
         .map(|data| warp::reply::json(&data))
         .boxed();
     let campus = warp::path("campus")
-        .and(state.clone())
+        .and(state)
         .and_then(handle_campus)
         .map(|data| warp::reply::json(&data))
         .boxed();

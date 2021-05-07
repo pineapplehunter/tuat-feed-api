@@ -38,10 +38,8 @@ impl State {
             Instant::now() > self.academic.read().await.last_checked + self.interval;
 
         if update_academic {
-            self.academic
-                .write()
-                .await
-                .update(get_academic_feed().await?);
+            let info = get_academic_feed().await?;
+            self.academic.write().await.update(info);
         }
 
         let info = self.academic.read().await.info.clone();
@@ -54,7 +52,8 @@ impl State {
         let update_campus = Instant::now() > self.campus.read().await.last_checked + self.interval;
 
         if update_campus {
-            self.campus.write().await.update(get_campus_feed().await?);
+            let info = get_campus_feed().await?;
+            self.campus.write().await.update(info);
         }
 
         let info = self.campus.read().await.info.clone();
