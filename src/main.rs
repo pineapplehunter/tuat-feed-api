@@ -3,12 +3,12 @@
 //! This is code for a server that formatsthe TUAT feed to json
 
 use anyhow::{Context, Result};
-use argh::FromArgs;
 use log::info;
 use std::env;
 use std::net::ToSocketAddrs;
 use std::sync::Arc;
 use std::time::Duration;
+use structopt::StructOpt;
 use tuat_feed_api::{
     handlers::{
         v1::{handle_academic, handle_campus, handle_index},
@@ -27,14 +27,14 @@ pub(crate) const INTERVAL_MIN: u64 = 0;
 /// Interval duration computed from `INTERVAL_MIN`.
 const INTERVAL: Duration = Duration::from_secs(INTERVAL_MIN * 60);
 
-#[derive(FromArgs)]
-/// tuat feed api server
+#[derive(StructOpt)]
+#[structopt(name = "tuat-feed-api")]
 struct Args {
     /// hostname
-    #[argh(option, default = "String::from(\"localhost\")")]
+    #[structopt(short, long, default_value = "localhost")]
     hostname: String,
     /// port
-    #[argh(option, default = "8888")]
+    #[structopt(short, long, default_value = "8888")]
     port: u16,
 }
 
@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
     env_logger::init();
 
     // parse args
-    let args: Args = argh::from_env();
+    let args = Args::from_args();
 
     // crate state
     let state = Arc::new(State::init(INTERVAL).await?);
