@@ -38,8 +38,8 @@ struct Args {
     port: u16,
 }
 
-#[tokio::main]
 /// the main server function
+#[tokio::main]
 async fn main() -> Result<()> {
     // if env is not set then default to RUST_LOG=info
     if env::var_os("RUST_LOG").is_none() {
@@ -51,7 +51,7 @@ async fn main() -> Result<()> {
     let args = Args::from_args();
 
     // crate state
-    let state = Arc::new(State::init(INTERVAL).await?);
+    let state = Arc::new(State::init(INTERVAL)?);
     let state = warp::any().map(move || state.clone());
 
     // paths

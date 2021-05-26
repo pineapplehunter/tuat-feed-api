@@ -22,7 +22,7 @@ pub struct State {
 impl State {
     /// initializes the state.
     /// fetches the data from tuat feed and stores it.
-    pub async fn init(interval: Duration) -> Result<Self> {
+    pub fn init(interval: Duration) -> Result<Self> {
         info!("initializing state");
 
         Ok(Self {
@@ -79,5 +79,15 @@ impl State {
             campus: RwLock::new(campus),
             interval,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::State;
+    use std::time::Duration;
+    #[test]
+    fn state_init() {
+        State::init(Duration::from_secs(1)).expect("could not init the state");
     }
 }

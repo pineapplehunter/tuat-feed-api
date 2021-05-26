@@ -3,6 +3,7 @@ use tuat_feed_parser::Info;
 
 /// InfoSection.
 /// This struct holds the information and when it was last checked.
+#[derive(Debug, Clone)]
 pub struct InfoSection {
     /// the time the information was last checked.
     pub last_checked: Instant,
@@ -21,5 +22,22 @@ impl InfoSection {
     pub fn update(&mut self, info: Vec<Info>) {
         self.info = info;
         self.last_checked = Instant::now();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::time::Instant;
+    use tuat_feed_parser::Info;
+
+    use super::InfoSection;
+
+    #[test]
+    fn infosection_update() {
+        let mut section = InfoSection::new(vec![Info::new(0)], Instant::now());
+        let InfoSection { info, last_checked } = section.clone();
+        section.update(vec![Info::new(1)]);
+        assert!(section.last_checked > last_checked);
+        assert_ne!(section.info[0], info[0]);
     }
 }
