@@ -5,7 +5,7 @@ use scraper::{Html, Selector};
 pub async fn info_parser(content: &str, id: u32) -> Result<Info, ParseError> {
     let mut information = Info::new(id);
 
-    let info_doc = Html::parse_document(&content);
+    let info_doc = Html::parse_document(content);
     let tr_selector = Selector::parse("table>tbody>tr").unwrap();
 
     for infos in info_doc.select(&tr_selector) {
