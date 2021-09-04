@@ -1,5 +1,5 @@
-use anyhow::Result;
-use log::info;
+use color_eyre::eyre::Result;
+use log::{info, warn};
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use tokio::try_join;
@@ -38,8 +38,10 @@ impl State {
             Instant::now() > self.academic.read().await.last_checked + self.interval;
 
         if update_academic {
-            let info = get_academic_feed().await?;
-            self.academic.write().await.update(info);
+            match get_academic_feed().await {
+                Ok(info) => self.academic.write().await.update(info),
+                Err(e) => warn!("academic {:?}", e),
+            }
         }
 
         let info = self.academic.read().await.info.clone();
@@ -52,8 +54,10 @@ impl State {
         let update_campus = Instant::now() > self.campus.read().await.last_checked + self.interval;
 
         if update_campus {
-            let info = get_campus_feed().await?;
-            self.campus.write().await.update(info);
+            match get_campus_feed().await {
+                Ok(info) => self.campus.write().await.update(info),
+                Err(e) => warn!("campus {:?}", e),
+            }
         }
 
         let info = self.campus.read().await.info.clone();

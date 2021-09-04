@@ -2,7 +2,7 @@
 //!
 //! This is code for a server that formatsthe TUAT feed to json
 
-use anyhow::{Context, Result};
+use color_eyre::eyre::{ContextCompat, Result};
 use log::info;
 use std::env;
 use std::net::ToSocketAddrs;
@@ -41,6 +41,7 @@ struct Args {
 /// the main server function
 #[tokio::main]
 async fn main() -> Result<()> {
+    color_eyre::install()?;
     // if env is not set then default to RUST_LOG=info
     if env::var_os("RUST_LOG").is_none() {
         env::set_var("RUST_LOG", "info");
@@ -61,7 +62,7 @@ async fn main() -> Result<()> {
         .map(|data| warp::reply::json(&data));
     let academic = warp::path("academic")
         .and(state.clone())
-        .and_then(handle_academic)
+        .and_then(handle_academic) 
         .map(|data| warp::reply::json(&data));
     let campus = warp::path("campus")
         .and(state.clone())
@@ -79,7 +80,7 @@ async fn main() -> Result<()> {
     let address = format!("{}:{}", args.hostname, args.port)
         .to_socket_addrs()?
         .next()
-        .context("could not resolve address")?;
+        .wrap_err("could not resolve address")?;
 
     // start server
     info!("start server on {}", address);

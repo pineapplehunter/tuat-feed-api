@@ -1,5 +1,5 @@
 use crate::State;
-use anyhow::Result;
+use color_eyre::eyre::Result;
 use serde::Serialize;
 use std::sync::Arc;
 use tuat_feed_parser::Info;
