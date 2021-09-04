@@ -3,7 +3,6 @@
 //! # tuat-feed-parser
 //! this crate provides a api to access the tuat feed as a struct.
 
-use futures_util::stream::{self, StreamExt};
 use thiserror::Error;
 
 mod get;
@@ -22,8 +21,6 @@ const ACADEMIC_FEED_URL: &str =
     "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=1&par=20&skip=0";
 const INFO_URL_BASE: &str = "http://t-board.office.tuat.ac.jp/T/boar/vewAjax.php?i=";
 
-const BUFFERED_NUM: usize = 10;
-
 /// Any Error That may happen in this library
 #[derive(Error, Debug)]
 pub enum TuatFeedParserError {
@@ -41,15 +38,18 @@ pub async fn get_campus_feed() -> Result<Vec<Info>, TuatFeedParserError> {
     let content = get(CAMPUS_FEED_URL).await?;
     let ids = main_page_parser(&content).await?;
 
-    let informations: Vec<Info> = stream::iter(ids)
-        .map(|id| async move { (get(&format!("{}{}", INFO_URL_BASE, id)).await, id) })
-        .buffered(BUFFERED_NUM)
-        .filter_map(|(content, id)| async move { content.ok().map(|content| (content, id)) })
-        .map(|(content, id)| async move { info_parser(&content, id).await })
-        .buffered(BUFFERED_NUM)
-        .filter_map(|info| async move { info.ok() })
-        .collect()
-        .await;
+    let mut informations = Vec::new();
+    for id in ids {
+        let content_result = get(&format!("{}{}", INFO_URL_BASE, id)).await;
+        if let Err(_) = content_result {
+            continue;
+        }
+        let info_result = info_parser(&content_result.unwrap(), id).await;
+        if let Err(_) = info_result {
+            continue;
+        }
+        informations.push(info_result.unwrap());
+    }
 
     Ok(informations)
 }
@@ -60,15 +60,18 @@ pub async fn get_academic_feed() -> Result<Vec<Info>, TuatFeedParserError> {
     let content = get(ACADEMIC_FEED_URL).await?;
     let ids = main_page_parser(&content).await?;
 
-    let informations: Vec<Info> = stream::iter(ids)
-        .map(|id| async move { (get(&format!("{}{}", INFO_URL_BASE, id)).await, id) })
-        .buffered(BUFFERED_NUM)
-        .filter_map(|(content, id)| async move { content.ok().map(|content| (content, id)) })
-        .map(|(content, id)| async move { info_parser(&content, id).await })
-        .buffered(BUFFERED_NUM)
-        .filter_map(|info| async move { info.ok() })
-        .collect()
-        .await;
+    let mut informations = Vec::new();
+    for id in ids {
+        let content_result = get(&format!("{}{}", INFO_URL_BASE, id)).await;
+        if let Err(_) = content_result {
+            continue;
+        }
+        let info_result = info_parser(&content_result.unwrap(), id).await;
+        if let Err(_) = info_result {
+            continue;
+        }
+        informations.push(info_result.unwrap());
+    }
 
     Ok(informations)
 }

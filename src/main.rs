@@ -62,7 +62,7 @@ async fn main() -> Result<()> {
         .map(|data| warp::reply::json(&data));
     let academic = warp::path("academic")
         .and(state.clone())
-        .and_then(handle_academic) 
+        .and_then(handle_academic)
         .map(|data| warp::reply::json(&data));
     let campus = warp::path("campus")
         .and(state.clone())
