@@ -41,11 +41,11 @@ pub async fn get_campus_feed() -> Result<Vec<Info>, TuatFeedParserError> {
     let mut informations = Vec::new();
     for id in ids {
         let content_result = get(&format!("{}{}", INFO_URL_BASE, id)).await;
-        if let Err(_) = content_result {
+        if content_result.is_err() {
             continue;
         }
         let info_result = info_parser(&content_result.unwrap(), id).await;
-        if let Err(_) = info_result {
+        if info_result.is_err() {
             continue;
         }
         informations.push(info_result.unwrap());
@@ -63,11 +63,11 @@ pub async fn get_academic_feed() -> Result<Vec<Info>, TuatFeedParserError> {
     let mut informations = Vec::new();
     for id in ids {
         let content_result = get(&format!("{}{}", INFO_URL_BASE, id)).await;
-        if let Err(_) = content_result {
+        if content_result.is_err() {
             continue;
         }
         let info_result = info_parser(&content_result.unwrap(), id).await;
-        if let Err(_) = info_result {
+        if info_result.is_err() {
             continue;
         }
         informations.push(info_result.unwrap());
