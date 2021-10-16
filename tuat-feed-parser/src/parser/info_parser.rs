@@ -17,38 +17,42 @@ pub async fn info_parser(content: &str, id: u32) -> Result<Info, ParseError> {
             }
             let mut label_text = label_elem.text().collect::<String>();
             let data_text;
-            if label_text.starts_with("添付ファイル") {
-                label_text = String::from("添付ファイル");
-                let ancor = Selector::parse("a").unwrap();
-                data_text = data
-                    .next()
-                    .unwrap()
-                    .select(&ancor)
-                    .filter_map(|elem| -> Option<String> {
-                        Some(format!(
-                            "[{}](http://t-board.office.tuat.ac.jp{})",
-                            elem.text().collect::<String>().trim(),
-                            elem.value().attr("href")?
-                        ))
-                    })
-                    .collect::<Vec<String>>()
-                    .join("\n");
-            } else {
-                data_text = data
-                    .map(|elem| {
-                        let mut string: String = elem
-                            .text()
-                            .map(|s| s.trim().to_owned())
-                            .collect::<Vec<String>>()
-                            .join("\n");
-                        if string.ends_with('\n') {
-                            string.pop();
-                        }
-                        string
-                    })
-                    .filter(|val| !val.contains("テーブル表示"))
-                    .collect::<Vec<String>>()
-                    .join("\n");
+            match &label_text {
+                text if text.starts_with("添付ファイル") => {
+                    label_text = String::from("添付ファイル");
+                    let ancor = Selector::parse("a").unwrap();
+                    data_text = data
+                        .next()
+                        .unwrap()
+                        .select(&ancor)
+                        .filter_map(|elem| -> Option<String> {
+                            Some(format!(
+                                "[{}](http://t-board.office.tuat.ac.jp{})",
+                                elem.text().collect::<String>().trim(),
+                                elem.value().attr("href")?
+                            ))
+                        })
+                        .collect::<Vec<String>>()
+                        .join("\n");
+                }
+                text if text.starts_with("対象") => continue,
+                _ => {
+                    data_text = data
+                        .map(|elem| {
+                            let mut string: String = elem
+                                .text()
+                                .map(|s| s.trim().to_owned())
+                                .collect::<Vec<String>>()
+                                .join("\n");
+                            if string.ends_with('\n') {
+                                string.pop();
+                            }
+                            string
+                        })
+                        .filter(|val| !val.contains("テーブル表示"))
+                        .collect::<Vec<String>>()
+                        .join("\n");
+                }
             }
             information.data.insert(label_text, data_text);
         }
@@ -71,7 +75,6 @@ mod test {
         let mut correct = HashMap::<String, String>::new();
         correct.insert("カテゴリー".into(), "休講・補講".into());
         correct.insert("担当者".into(), "(柴田\u{3000}和樹)".into());
-        correct.insert("対象".into(), "工学部\n1年\n2年\n3年\n4年\n生命工学科(L)\n○\n○\n○\n○\n応用分子化学科(F)\n○\n○\n○\n○\n有機材料化学科(G)\n○\n○\n○\n○\n化学システム工学科(K)\n○\n○\n○\n○\n機械システム工学科(M)\n●\n○\n○\n○\n物理システム工学科(P)\n○\n○\n○\n○\n電気電子工学科(E)\n○\n○\n○\n○\n情報工学科(S)\n○\n○\n○\n○\n生体医用システム工学(B)2019～\n○\n○\n○\n○\n応用化学科（C)2019～\n○\n○\n○\n○\n化学物理工学科(U)2019～\n○\n○\n○\n○\n知能情報システム工学科(A)2019～\n○\n○\n○\n○\n工学府博士前期課程\n1年\n2年\n生命工学専攻\n○\n○\n応用化学専攻(C1)\n○\n○\n応用化学専攻(C2)\n○\n○\n応用化学専攻(C3)\n○\n○\n機械システム工学専攻\n○\n○\n物理システム工学専攻\n○\n○\n電気電子工学専攻\n○\n○\n情報工学専攻\n○\n○\n工学府博士後期課程\n1年\n2年\n3年\n生命工学専攻\n○\n○\n○\n応用化学専攻(C1)\n○\n○\n○\n応用化学専攻(C2)\n○\n○\n○\n応用化学専攻(C3)\n○\n○\n○\n機械システム工学専攻\n○\n○\n○\n電子情報工学(A1)\n○\n○\n○\n電子情報工学(A2)\n○\n○\n○\n電子情報工学(A3)\n○\n○\n○\n専門職学位課程（Ｉ専攻）\n1年\n2年\n産業技術専攻\n○\n○\nBASE博士前期課程\n1年\n2年\n生物機能システム科学専攻（生物システム応用科学専攻）\n○\n○\nBASE博士後期課程・博士課程\n1年\n2年\n3年\n生物機能システム科学専攻（生物システム応用科学専攻）\n○\n○\n○\n共同先進健康科学専攻\n○\n○\n○\nBASE一貫制博士課程\n1年\n2年\n3年\n4年\n5年\nリーディングプログラム\n○\n○\n○\n○\n○\n食料エネルギーシステム科学専攻\n○\n○\n○\n○\n○".into());
         correct.insert("発信元".into(), "教務係".into());
         correct.insert("本文".into(), "".into());
         correct.insert(
