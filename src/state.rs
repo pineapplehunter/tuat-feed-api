@@ -1,5 +1,5 @@
 use crate::info_section::InfoBundle;
-use color_eyre::eyre::Result;
+use anyhow::Result;
 use log::{info, warn};
 use rocket::tokio::sync::{Mutex, RwLock};
 use std::time::{Duration, Instant};
