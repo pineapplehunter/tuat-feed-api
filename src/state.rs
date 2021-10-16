@@ -1,73 +1,84 @@
+use crate::info_section::InfoBundle;
 use color_eyre::eyre::Result;
 use log::{info, warn};
+use rocket::tokio::sync::{Mutex, RwLock};
 use std::time::{Duration, Instant};
-use tokio::sync::RwLock;
-use tokio::try_join;
-
-use tuat_feed_parser::{get_academic_feed, get_campus_feed, Info};
-
-use crate::info_section::InfoSection;
+use tuat_feed_parser::{Feed, Info, ACADEMIC_FEED_URL, CAMPUS_FEED_URL};
 
 /// State of the server.
 /// contains data for both academic and campus information.
-pub struct State {
+pub struct InformationState {
+    academic_state: Mutex<Feed>,
     /// academic information.
-    academic: RwLock<InfoSection>,
+    academic_info: RwLock<InfoBundle>,
+    campus_state: Mutex<Feed>,
     /// campus information.
-    campus: RwLock<InfoSection>,
+    campus_info: RwLock<InfoBundle>,
     /// interval to refresh
     interval: Duration,
 }
 
-impl State {
+impl InformationState {
     /// initializes the state.
     /// fetches the data from tuat feed and stores it.
-    pub fn init(interval: Duration) -> Result<Self> {
+    pub fn init(interval: Duration) -> Self {
         info!("initializing state");
 
-        Ok(Self {
-            academic: RwLock::new(InfoSection::new(Vec::new(), Instant::now() - interval)),
-            campus: RwLock::new(InfoSection::new(Vec::new(), Instant::now() - interval)),
+        Self {
+            academic_state: Mutex::new(Feed::new(ACADEMIC_FEED_URL)),
+            academic_info: RwLock::new(InfoBundle::new(Vec::new(), Instant::now() - interval)),
+            campus_state: Mutex::new(Feed::new(CAMPUS_FEED_URL)),
+            campus_info: RwLock::new(InfoBundle::new(Vec::new(), Instant::now() - interval)),
             interval,
-        })
+        }
     }
 
     /// updates and gets academic info
-    pub async fn get_academic(&self) -> Result<Vec<Info>> {
+    pub async fn academic(&self) -> Result<Vec<Info>> {
         let update_academic =
-            Instant::now() > self.academic.read().await.last_checked + self.interval;
+            Instant::now() > self.academic_info.read().await.last_checked + self.interval;
 
         if update_academic {
-            match get_academic_feed().await {
-                Ok(info) => self.academic.write().await.update(info),
-                Err(e) => warn!("academic {:?}", e),
+            let mut lock = self.academic_info.write().await;
+            let update_academic = Instant::now() > lock.last_checked + self.interval;
+            if update_academic {
+                match self.academic_state.lock().await.get().await {
+                    Ok(info) => lock.update(info),
+                    Err(e) => warn!("academic {:?}", e),
+                }
             }
         }
 
-        let info = self.academic.read().await.info.clone();
+        let info = self.academic_info.read().await.info.clone();
 
         Ok(info)
     }
 
     /// updates and gets capmus info
-    pub async fn get_campus(&self) -> Result<Vec<Info>> {
-        let update_campus = Instant::now() > self.campus.read().await.last_checked + self.interval;
+    pub async fn campus(&self) -> Result<Vec<Info>> {
+        let update_campus =
+            Instant::now() > self.campus_info.read().await.last_checked + self.interval;
 
         if update_campus {
-            match get_campus_feed().await {
-                Ok(info) => self.campus.write().await.update(info),
-                Err(e) => warn!("campus {:?}", e),
+            let mut lock = self.campus_info.write().await;
+            let update_campus = Instant::now() > lock.last_checked + self.interval;
+            if update_campus {
+                match self.campus_state.lock().await.get().await {
+                    Ok(info) => lock.update(info),
+                    Err(e) => warn!("campus {:?}", e),
+                }
             }
         }
 
-        let info = self.campus.read().await.info.clone();
+        let info = self.campus_info.read().await.info.clone();
 
         Ok(info)
     }
 
     /// gets all info
-    pub async fn get_all(&self) -> Result<Vec<Info>> {
-        let (mut academic, campus) = try_join!(self.get_academic(), self.get_campus())?;
+    pub async fn all(&self) -> Result<Vec<Info>> {
+        let mut academic = self.academic().await?;
+        let campus = self.campus().await?;
 
         academic.extend(campus);
 
@@ -77,10 +88,16 @@ impl State {
     /// sets all values in struct.
     /// this function was made for testing and should not be used in regular code.
     #[doc(hidden)]
-    pub fn set_all(academic: InfoSection, campus: InfoSection, interval: Duration) -> State {
+    pub fn __set_all(
+        academic: InfoBundle,
+        campus: InfoBundle,
+        interval: Duration,
+    ) -> InformationState {
         Self {
-            academic: RwLock::new(academic),
-            campus: RwLock::new(campus),
+            academic_state: Mutex::new(Feed::new(ACADEMIC_FEED_URL)),
+            academic_info: RwLock::new(academic),
+            campus_state: Mutex::new(Feed::new(CAMPUS_FEED_URL)),
+            campus_info: RwLock::new(campus),
             interval,
         }
     }
@@ -88,10 +105,10 @@ impl State {
 
 #[cfg(test)]
 mod tests {
-    use super::State;
+    use super::InformationState;
     use std::time::Duration;
     #[test]
     fn state_init() {
-        State::init(Duration::from_secs(1)).expect("could not init the state");
+        InformationState::init(Duration::from_secs(1));
     }
 }

@@ -3,6 +3,8 @@
 //! # tuat-feed-parser
 //! this crate provides a api to access the tuat feed as a struct.
 
+use std::{collections::HashMap, time::Duration};
+
 use thiserror::Error;
 
 mod get;
@@ -15,9 +17,11 @@ use parser::{error::ParseError, info_parser, main_page_parser};
 
 use log::info;
 
-const CAMPUS_FEED_URL: &str =
+/// campas feed url
+pub const CAMPUS_FEED_URL: &str =
     "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=0&par=20&skip=0";
-const ACADEMIC_FEED_URL: &str =
+/// academic feed url
+pub const ACADEMIC_FEED_URL: &str =
     "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=1&par=20&skip=0";
 const INFO_URL_BASE: &str = "http://t-board.office.tuat.ac.jp/T/boar/vewAjax.php?i=";
 
@@ -32,46 +36,47 @@ pub enum TuatFeedParserError {
     GetError(#[from] GetError),
 }
 
-/// get data from the campus feed
-pub async fn get_campus_feed() -> Result<Vec<Info>, TuatFeedParserError> {
-    info!("fetching campus feed");
-    let content = get(CAMPUS_FEED_URL).await?;
-    let ids = main_page_parser(&content).await?;
-
-    let mut informations = Vec::new();
-    for id in ids {
-        let content_result = get(&format!("{}{}", INFO_URL_BASE, id)).await;
-        if content_result.is_err() {
-            continue;
-        }
-        let info_result = info_parser(&content_result.unwrap(), id).await;
-        if info_result.is_err() {
-            continue;
-        }
-        informations.push(info_result.unwrap());
-    }
-
-    Ok(informations)
+/// For academic and Campus
+pub struct Feed {
+    feed_url: &'static str,
+    buffer: HashMap<u32, Info>,
 }
 
-/// get data from the academic feed
-pub async fn get_academic_feed() -> Result<Vec<Info>, TuatFeedParserError> {
-    info!("fetching academic feed");
-    let content = get(ACADEMIC_FEED_URL).await?;
-    let ids = main_page_parser(&content).await?;
-
-    let mut informations = Vec::new();
-    for id in ids {
-        let content_result = get(&format!("{}{}", INFO_URL_BASE, id)).await;
-        if content_result.is_err() {
-            continue;
+impl Feed {
+    /// initialize feed
+    pub fn new(feed_url: &'static str) -> Self {
+        Self {
+            feed_url,
+            buffer: HashMap::new(),
         }
-        let info_result = info_parser(&content_result.unwrap(), id).await;
-        if info_result.is_err() {
-            continue;
-        }
-        informations.push(info_result.unwrap());
     }
 
-    Ok(informations)
+    /// get the actual feed
+    pub async fn get(&mut self) -> Result<Vec<Info>, TuatFeedParserError> {
+        info!("fetching campus feed");
+        let content = get(self.feed_url).await?;
+        let ids = main_page_parser(&content).await?;
+
+        let mut informations = Vec::new();
+        for id in ids {
+            let mut info = self.buffer.get(&id).cloned();
+            if let None = info {
+                info!("fetching new info {}", id);
+                tokio::time::sleep(Duration::from_secs(1)).await;
+                let content_result = get(&format!("{}{}", INFO_URL_BASE, id)).await;
+                if content_result.is_err() {
+                    continue;
+                }
+                let info_result = info_parser(&content_result.unwrap(), id).await;
+                if info_result.is_err() {
+                    continue;
+                }
+                info = Some(info_result.unwrap());
+                self.buffer.insert(id, info.clone().unwrap());
+            }
+            informations.push(info.unwrap());
+        }
+
+        Ok(informations)
+    }
 }

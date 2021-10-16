@@ -4,7 +4,6 @@ version = "0.1.0"
 authors = ["Shogo Takata <pineapplehunter.daniel@gmail.com>"]
 edition = "2018"
 license = "MPL-2.0"
-
 exclude = ["**/*.html"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -14,6 +13,4 @@ serde = { version = "1.0.118", features = ["derive"] }
 reqwest = "0.11.0"
 thiserror = "1.0.22"
 log = "0.4.11"
-
-[dev-dependencies]
-tokio = { version = "1.0.2", features = ["full"] }
+tokio = { version = "1.0.2" }

@@ -6,9 +6,7 @@
 //! This is the library part.
 
 mod state;
-pub use state::State;
+pub use state::InformationState;
 
-/// holds handlers to each path
-pub mod handlers;
 /// a place to store data for a category
 pub mod info_section;

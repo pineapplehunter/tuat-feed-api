@@ -15,13 +15,41 @@ pub async fn info_parser(content: &str, id: u32) -> Result<Info, ParseError> {
             if label_elem.value().attr("class") != Some("defLabel") {
                 continue;
             }
-            let label_text = label_elem.text().collect::<String>();
-            let data_text = data
-                .map(|elem| elem.text().map(|s| s.trim()).collect::<String>())
-                .filter(|val| !val.contains("テーブル表示"))
-                .collect::<Vec<String>>()
-                .join("\n");
-
+            let mut label_text = label_elem.text().collect::<String>();
+            let data_text;
+            if label_text.starts_with("添付ファイル") {
+                label_text = String::from("添付ファイル");
+                let ancor = Selector::parse("a").unwrap();
+                data_text = data
+                    .next()
+                    .unwrap()
+                    .select(&ancor)
+                    .filter_map(|elem| -> Option<String> {
+                        Some(format!(
+                            "[{}](http://t-board.office.tuat.ac.jp{})",
+                            elem.text().collect::<String>().trim(),
+                            elem.value().attr("href")?
+                        ))
+                    })
+                    .collect::<Vec<String>>()
+                    .join("\n");
+            } else {
+                data_text = data
+                    .map(|elem| {
+                        let mut string: String = elem
+                            .text()
+                            .map(|s| s.trim().to_owned())
+                            .collect::<Vec<String>>()
+                            .join("\n");
+                        if string.ends_with('\n') {
+                            string.pop();
+                        }
+                        string
+                    })
+                    .filter(|val| !val.contains("テーブル表示"))
+                    .collect::<Vec<String>>()
+                    .join("\n");
+            }
             information.data.insert(label_text, data_text);
         }
     }

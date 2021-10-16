@@ -17,10 +17,6 @@ cache = []
 
 [dependencies]
 tuat-feed-parser = { path = "tuat-feed-parser" }
-tokio = { version = "1.8.1", features = ["full"] }
-serde = { version = "1.0.126", features = ["derive"] }
-warp = "0.3.1"
-env_logger = "0.9.0"
 log = "0.4.14"
-structopt = "0.3.22"
 color-eyre = "0.5.11"
+rocket = { version = "0.5.0-rc.1", features = ["json"] }
