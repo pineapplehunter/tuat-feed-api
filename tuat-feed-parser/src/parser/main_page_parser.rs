@@ -22,7 +22,7 @@ pub async fn main_page_parser(content: &str) -> Result<Vec<u32>, ParseError> {
 
 #[cfg(test)]
 mod test {
-    const TEST_DATA: &'static str = include_str!("../../test_assets/test_academic_feed.html");
+    const TEST_DATA: &str = include_str!("../../test_assets/test_academic_feed.html");
     use super::main_page_parser;
 
     #[tokio::test]

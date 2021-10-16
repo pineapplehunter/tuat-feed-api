@@ -30,11 +30,6 @@ mod test {
     use tuat_feed_api::InformationState;
     use tuat_feed_parser::Info;
 
-    #[test]
-    fn simple() {
-        assert_eq!(1 + 1, 2);
-    }
-
     fn dummy_info(id: u32) -> Info {
         let mut data = HashMap::new();
         data.insert("hello".into(), "world".into());
