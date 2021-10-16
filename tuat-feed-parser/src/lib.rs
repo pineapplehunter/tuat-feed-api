@@ -60,7 +60,7 @@ impl Feed {
         let mut informations = Vec::new();
         for id in ids {
             let mut info = self.buffer.get(&id).cloned();
-            if let None = info {
+            if info.is_none() {
                 info!("fetching new info {}", id);
                 tokio::time::sleep(Duration::from_secs(1)).await;
                 let content_result = get(&format!("{}{}", INFO_URL_BASE, id)).await;
