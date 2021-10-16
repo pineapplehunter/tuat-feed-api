@@ -8,5 +8,7 @@
 mod state;
 pub use state::InformationState;
 
+/// handlers for endpoints
+pub mod handlers;
 /// a place to store data for a category
 pub mod info_section;

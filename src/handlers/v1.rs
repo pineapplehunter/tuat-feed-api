@@ -1,18 +1,21 @@
+use crate::InformationState;
 use rocket::serde::json::Json;
 use rocket::{get, State};
-use tuat_feed_api::InformationState;
 use tuat_feed_parser::Info;
 
+/// all data
 #[get("/")]
 pub async fn all(state: &State<InformationState>) -> Json<Vec<Info>> {
     Json(state.all().await.unwrap())
 }
 
+/// academic
 #[get("/academic")]
 pub async fn academic(state: &State<InformationState>) -> Json<Vec<Info>> {
     Json(state.academic().await.unwrap())
 }
 
+/// campus
 #[get("/campus")]
 pub async fn campus(state: &State<InformationState>) -> Json<Vec<Info>> {
     Json(state.campus().await.unwrap())
@@ -21,13 +24,13 @@ pub async fn campus(state: &State<InformationState>) -> Json<Vec<Info>> {
 #[cfg(test)]
 mod test {
     use super::{academic, all, campus};
+    use crate::info_section::InfoBundle;
+    use crate::InformationState;
     use rocket::http::Status;
     use rocket::local::blocking::Client;
     use rocket::{routes, Build, Rocket};
     use std::collections::HashMap;
     use std::time::{Duration, Instant};
-    use tuat_feed_api::info_section::InfoBundle;
-    use tuat_feed_api::InformationState;
     use tuat_feed_parser::Info;
 
     fn dummy_info(id: u32) -> Info {
