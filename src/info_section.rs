@@ -1,7 +1,6 @@
 use std::time::Instant;
 use tuat_feed_parser::Info;
 
-/// InfoSection.
 /// This struct holds the information and when it was last checked.
 #[derive(Debug, Clone)]
 pub struct InfoBundle {
@@ -12,7 +11,7 @@ pub struct InfoBundle {
 }
 
 impl InfoBundle {
-    /// creates a new InfoSection from a `Vec<Info>`.
+    /// creates a new `InfoBundle` from a `Vec<Info>`.
     pub fn new(info: Vec<Info>, last_checked: Instant) -> Self {
         InfoBundle { last_checked, info }
     }
@@ -33,7 +32,7 @@ mod tests {
     use super::InfoBundle;
 
     #[test]
-    fn infosection_update() {
+    fn test_info_bundle_update() {
         let mut section = InfoBundle::new(vec![Info::new(0)], Instant::now());
         let InfoBundle { info, last_checked } = section.clone();
         section.update(vec![Info::new(1)]);
