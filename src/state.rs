@@ -1,4 +1,4 @@
-use crate::info_section::InfoBundle;
+use crate::info_bundle::InfoBundle;
 use anyhow::Result;
 use log::{info, warn};
 use rocket::tokio::sync::{Mutex, RwLock};

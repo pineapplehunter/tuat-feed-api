@@ -24,7 +24,7 @@ pub async fn campus(state: &State<InformationState>) -> Json<Vec<Info>> {
 #[cfg(test)]
 mod test {
     use super::{academic, all, campus};
-    use crate::info_section::InfoBundle;
+    use crate::info_bundle::InfoBundle;
     use crate::InformationState;
     use rocket::http::Status;
     use rocket::local::blocking::Client;
