@@ -5,10 +5,10 @@
 //! This is code for a server that formatsthe TUAT feed to json.
 //! This is the library part.
 
-mod state;
-pub use state::InformationState;
-
 /// handlers for endpoints
 pub mod handlers;
 /// a place to store data for a category
 pub mod info_bundle;
+
+/// manages state
+pub mod state;

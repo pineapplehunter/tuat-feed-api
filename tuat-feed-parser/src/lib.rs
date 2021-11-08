@@ -18,12 +18,38 @@ use parser::{error::ParseError, info_parser, main_page_parser};
 use log::info;
 
 /// campas feed url
-pub const CAMPUS_FEED_URL: &str =
+const T_CAMPUS_FEED_URL: &str =
     "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=0&par=20&skip=0";
 /// academic feed url
-pub const ACADEMIC_FEED_URL: &str =
+const T_ACADEMIC_FEED_URL: &str =
     "http://t-board.office.tuat.ac.jp/T/boar/resAjax.php?bAnno=1&par=20&skip=0";
-const INFO_URL_BASE: &str = "http://t-board.office.tuat.ac.jp/T/boar/vewAjax.php?i=";
+const T_INFO_URL_BASE: &str = "http://t-board.office.tuat.ac.jp/T/boar/vewAjax.php?i=";
+
+/// campas feed url
+const A_CAMPUS_FEED_URL: &str =
+    "http://t-board.office.tuat.ac.jp/A/boar/resAjax.php?bAnno=0&par=20&skip=0";
+/// academic feed url
+const A_ACADEMIC_FEED_URL: &str =
+    "http://t-board.office.tuat.ac.jp/A/boar/resAjax.php?bAnno=1&par=20&skip=0";
+const A_INFO_URL_BASE: &str = "http://t-board.office.tuat.ac.jp/A/boar/vewAjax.php?i=";
+
+#[derive(Debug)]
+/// 学部
+pub enum Gakubu {
+    /// 工学部
+    Technology,
+    /// 農学部
+    Agriculture,
+}
+
+#[derive(Debug)]
+/// カテゴリ
+pub enum FeedCategory {
+    /// キャンパス情報
+    Campus,
+    /// 教務情報
+    Academic,
+}
 
 /// Any Error That may happen in this library
 #[derive(Error, Debug)]
@@ -38,22 +64,36 @@ pub enum TuatFeedParserError {
 
 /// For academic and Campus
 pub struct Feed {
+    name: String,
     feed_url: &'static str,
+    info_url: &'static str,
     buffer: HashMap<u32, Info>,
 }
 
 impl Feed {
     /// initialize feed
-    pub fn new(feed_url: &'static str) -> Self {
+    pub fn new(gakubu: Gakubu, category: FeedCategory) -> Self {
+        let (feed_url, info_url) = match gakubu {
+            Gakubu::Technology => match category {
+                FeedCategory::Campus => (T_CAMPUS_FEED_URL, T_INFO_URL_BASE),
+                FeedCategory::Academic => (T_ACADEMIC_FEED_URL, T_INFO_URL_BASE),
+            },
+            Gakubu::Agriculture => match category {
+                FeedCategory::Campus => (A_CAMPUS_FEED_URL, A_INFO_URL_BASE),
+                FeedCategory::Academic => (A_ACADEMIC_FEED_URL, A_INFO_URL_BASE),
+            },
+        };
         Self {
+            name: format!("{:?} {:?}", gakubu, category),
             feed_url,
+            info_url,
             buffer: HashMap::new(),
         }
     }
 
     /// get the actual feed
-    pub async fn get(&mut self) -> Result<Vec<Info>, TuatFeedParserError> {
-        info!("fetching campus feed");
+    pub async fn fetch(&mut self) -> Result<Vec<Info>, TuatFeedParserError> {
+        info!("fetching {} feed", self.name);
         let content = get(self.feed_url).await?;
         let ids = main_page_parser(&content).await?;
 
@@ -61,9 +101,9 @@ impl Feed {
         for id in ids {
             let mut info = self.buffer.get(&id).cloned();
             if info.is_none() {
-                info!("fetching new info {}", id);
+                info!("fetching new info {} from {}", id, self.name);
                 tokio::time::sleep(Duration::from_secs(1)).await;
-                let content_result = get(&format!("{}{}", INFO_URL_BASE, id)).await;
+                let content_result = get(&format!("{}{}", self.info_url, id)).await;
                 if content_result.is_err() {
                     continue;
                 }
