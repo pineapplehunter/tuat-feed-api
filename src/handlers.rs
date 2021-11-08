@@ -1,5 +1,7 @@
 use rocket::response::Redirect;
-use rocket::{get, uri};
+use rocket::{get, uri, State};
+
+use crate::BasePath;
 
 /// routes for technology
 pub mod technology {
@@ -83,20 +85,20 @@ pub mod agriculture {
 
 /// all data
 #[get("/")]
-pub async fn all() -> Redirect {
-    Redirect::to(uri!(technology::all()))
+pub async fn all(base_path: &State<BasePath>) -> Redirect {
+    Redirect::to(uri!(base_path.base_path.clone(), technology::all()))
 }
 
 /// academic
 #[get("/academic")]
-pub async fn academic() -> Redirect {
-    Redirect::to(uri!(technology::academic()))
+pub async fn academic(base_path: &State<BasePath>) -> Redirect {
+    Redirect::to(uri!(base_path.base_path.clone(), technology::academic()))
 }
 
 /// campus
 #[get("/campus")]
-pub async fn campus() -> Redirect {
-    Redirect::to(uri!(technology::campus()))
+pub async fn campus(base_path: &State<BasePath>) -> Redirect {
+    Redirect::to(uri!(base_path.base_path.clone(), technology::campus()))
 }
 
 #[cfg(test)]
@@ -105,6 +107,8 @@ mod test {
     use crate::handlers::{agriculture, technology};
     use crate::info_bundle::InfoBundle;
     use crate::state::ServerState;
+    use crate::BasePath;
+    use rocket::fairing::AdHoc;
     use rocket::http::Status;
     use rocket::local::blocking::Client;
     use rocket::{routes, tokio, Build, Rocket};
@@ -139,6 +143,7 @@ mod test {
             .block_on(dummy_state());
         rocket::build()
             .manage(state)
+            .attach(AdHoc::config::<BasePath>())
             .mount("/", routes![all, academic, campus])
             .mount(
                 "/",
