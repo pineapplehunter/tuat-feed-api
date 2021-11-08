@@ -56,9 +56,9 @@ pub mod agriculture {
     /// all data
     #[get("/A")]
     pub async fn all(state: &State<Arc<ServerState>>) -> Json<Vec<Info>> {
-        let info_academic = state.technology_academic.information.read().await.clone();
+        let info_academic = state.agriculture_academic.information.read().await.clone();
 
-        let info_campus = state.technology_campus.information.read().await.clone();
+        let info_campus = state.agriculture_campus.information.read().await.clone();
         Json(
             info_academic
                 .info
@@ -71,14 +71,14 @@ pub mod agriculture {
     /// academic
     #[get("/A/academic")]
     pub async fn academic(state: &State<Arc<ServerState>>) -> Json<Vec<Info>> {
-        let info = state.technology_academic.information.read().await.clone();
+        let info = state.agriculture_academic.information.read().await.clone();
         Json(info.info)
     }
 
     /// campus
     #[get("/A/campus")]
     pub async fn campus(state: &State<Arc<ServerState>>) -> Json<Vec<Info>> {
-        let info = state.technology_campus.information.read().await.clone();
+        let info = state.agriculture_campus.information.read().await.clone();
         Json(info.info)
     }
 }
