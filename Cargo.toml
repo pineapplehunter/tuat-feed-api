@@ -10,12 +10,9 @@ license = "MPL-2.0"
 [workspace]
 members = ["tuat-feed-parser"]
 
-[features]
-default = ["cache"]
-cache = []
-
 [dependencies]
 tuat-feed-parser = { path = "tuat-feed-parser" }
 log = "0.4.14"
 rocket = { version = "0.5.0-rc.1", features = ["json"] }
 anyhow = "1.0.44"
+serde = { version = "1.0.130", features = ["derive"] }

@@ -56,13 +56,6 @@ jobs:
           command: clippy
           args: --all --all-targets
 
-      - name: check no-default-features
-        uses: actions-rs/cargo@v1
-        with:
-          toolchain: ${{matrix.rust}}
-          command: check
-          args: --all --bins --tests --examples --no-default-features
-
       - name: tests
         uses: actions-rs/cargo@v1
         with:
