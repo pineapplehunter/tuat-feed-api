@@ -6,6 +6,7 @@ use actix_web::{
     dev::HttpServiceFactory, http::header, middleware, web, App, HttpRequest, HttpResponse,
     HttpServer,
 };
+use log::info;
 use std::{env, sync::Arc, time::Duration};
 use tokio::time::sleep;
 use tuat_feed_api::{
@@ -50,6 +51,8 @@ async fn main() -> std::io::Result<()> {
             sleep(INTERVAL).await;
         }
     });
+    let address = format!("localhost:{}", port);
+    info!("starting server on {}", address);
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
@@ -74,7 +77,7 @@ async fn main() -> std::io::Result<()> {
             )
             .default_service(web::route().to(|| HttpResponse::NotFound().body("404 Not Found")))
     })
-    .bind(&format!("localhost:{}", port))?
+    .bind(&address.trim())?
     .run()
     .await
 }
