@@ -7,7 +7,7 @@ use actix_web::{
     HttpServer,
 };
 use std::{env, sync::Arc, time::Duration};
-use tokio::time::sleep;
+use tokio::{join, time::sleep};
 use tuat_feed_api::{
     handlers::{agriculture, technology},
     state::ServerState,
@@ -40,13 +40,13 @@ async fn main() -> std::io::Result<()> {
 
     let base_path = env::var("TUAT_FEED_API_BASEPATH").unwrap_or_else(|_| String::new());
 
-    tokio::spawn(async move {
+    let update_feed_task = async move {
         loop {
             state_cloned.update().await;
             sleep(INTERVAL).await;
         }
-    });
-    HttpServer::new(move || {
+    };
+    let server_task = HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
             .app_data(web::Data::new(state.clone()))
@@ -71,6 +71,7 @@ async fn main() -> std::io::Result<()> {
             .default_service(web::route().to(|| HttpResponse::NotFound().body("404 Not Found")))
     })
     .bind("localhost:8081")?
-    .run()
-    .await
+    .run();
+
+    join!(server_task, update_feed_task).0
 }
