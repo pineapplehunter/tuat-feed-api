@@ -1,7 +1,7 @@
 use crate::info_bundle::InfoBundle;
 use log::info;
-use rocket::tokio::sync::{Mutex, RwLock};
 use std::time::Instant;
+use tokio::sync::{Mutex, RwLock};
 use tuat_feed_parser::{Feed, FeedCategory, Gakubu};
 
 /// State of the server.

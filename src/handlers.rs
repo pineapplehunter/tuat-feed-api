@@ -1,117 +1,84 @@
-use rocket::response::Redirect;
-use rocket::{get, uri, State};
-
-use crate::BasePath;
-
 /// routes for technology
 pub mod technology {
+    use crate::state::ServerState;
+    use actix_web::{get, web, Responder};
     use std::sync::Arc;
-
-    use rocket::serde::json::Json;
-    use rocket::{get, State};
     use tuat_feed_parser::Info;
 
-    use crate::state::ServerState;
-
     /// all data
-    #[get("/T")]
-    pub async fn all(state: &State<Arc<ServerState>>) -> Json<Vec<Info>> {
+    #[get("/", name = "technology_all")]
+    pub async fn all(state: web::Data<Arc<ServerState>>) -> impl Responder {
         let info_academic = state.technology_academic.information.read().await.clone();
 
         let info_campus = state.technology_campus.information.read().await.clone();
-        Json(
+        web::Json(
             info_academic
                 .info
                 .into_iter()
                 .chain(info_campus.info)
-                .collect(),
+                .collect::<Vec<Info>>(),
         )
     }
 
     /// academic
-    #[get("/T/academic")]
-    pub async fn academic(state: &State<Arc<ServerState>>) -> Json<Vec<Info>> {
+    #[get("/academic", name = "technology_academic")]
+    pub async fn academic(state: web::Data<Arc<ServerState>>) -> impl Responder {
         let info = state.technology_academic.information.read().await.clone();
-        Json(info.info)
+        web::Json(info.info)
     }
 
     /// campus
-    #[get("/T/campus")]
-    pub async fn campus(state: &State<Arc<ServerState>>) -> Json<Vec<Info>> {
+    #[get("/campus", name = "technology_campus")]
+    pub async fn campus(state: web::Data<Arc<ServerState>>) -> impl Responder {
         let info = state.technology_campus.information.read().await.clone();
-        Json(info.info)
+        web::Json(info.info)
     }
 }
 
 /// routes for agriculture
 pub mod agriculture {
+    use crate::state::ServerState;
+    use actix_web::{get, web, Responder};
     use std::sync::Arc;
-
-    use rocket::serde::json::Json;
-    use rocket::{get, State};
     use tuat_feed_parser::Info;
 
-    use crate::state::ServerState;
-
     /// all data
-    #[get("/A")]
-    pub async fn all(state: &State<Arc<ServerState>>) -> Json<Vec<Info>> {
+    #[get("/")]
+    pub async fn all(state: web::Data<Arc<ServerState>>) -> impl Responder {
         let info_academic = state.agriculture_academic.information.read().await.clone();
 
         let info_campus = state.agriculture_campus.information.read().await.clone();
-        Json(
+        web::Json(
             info_academic
                 .info
                 .into_iter()
                 .chain(info_campus.info)
-                .collect(),
+                .collect::<Vec<Info>>(),
         )
     }
 
     /// academic
-    #[get("/A/academic")]
-    pub async fn academic(state: &State<Arc<ServerState>>) -> Json<Vec<Info>> {
+    #[get("/academic")]
+    pub async fn academic(state: web::Data<Arc<ServerState>>) -> impl Responder {
         let info = state.agriculture_academic.information.read().await.clone();
-        Json(info.info)
+        web::Json(info.info)
     }
 
     /// campus
-    #[get("/A/campus")]
-    pub async fn campus(state: &State<Arc<ServerState>>) -> Json<Vec<Info>> {
+    #[get("/campus")]
+    pub async fn campus(state: web::Data<Arc<ServerState>>) -> impl Responder {
         let info = state.agriculture_campus.information.read().await.clone();
-        Json(info.info)
+        web::Json(info.info)
     }
-}
-
-/// all data
-#[get("/")]
-pub async fn all(base_path: &State<BasePath>) -> Redirect {
-    Redirect::to(uri!(base_path.base_path.clone(), technology::all()))
-}
-
-/// academic
-#[get("/academic")]
-pub async fn academic(base_path: &State<BasePath>) -> Redirect {
-    Redirect::to(uri!(base_path.base_path.clone(), technology::academic()))
-}
-
-/// campus
-#[get("/campus")]
-pub async fn campus(base_path: &State<BasePath>) -> Redirect {
-    Redirect::to(uri!(base_path.base_path.clone(), technology::campus()))
 }
 
 #[cfg(test)]
 mod test {
-    use super::{academic, all, campus};
-    use crate::handlers::{agriculture, technology};
+    use super::technology;
     use crate::info_bundle::InfoBundle;
     use crate::state::ServerState;
-    use crate::BasePath;
-    use rocket::fairing::AdHoc;
-    use rocket::http::Status;
-    use rocket::local::blocking::Client;
-    use rocket::{routes, tokio, Build, Rocket};
+    use actix_web::http::StatusCode;
+    use actix_web::{test, web, App};
     use std::collections::HashMap;
     use std::sync::Arc;
     use std::time::Instant;
@@ -135,32 +102,19 @@ mod test {
         Arc::new(state)
     }
 
-    fn rocket() -> Rocket<Build> {
-        let state = tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()
-            .unwrap()
-            .block_on(dummy_state());
-        rocket::build()
-            .manage(state)
-            .attach(AdHoc::config::<BasePath>())
-            .mount("/", routes![all, academic, campus])
-            .mount(
-                "/",
-                routes![technology::all, technology::academic, technology::campus],
-            )
-            .mount(
-                "/",
-                routes![agriculture::all, agriculture::academic, agriculture::campus],
-            )
-    }
+    #[actix_rt::test]
+    async fn check_json_formatting_index() {
+        let mut app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(dummy_state().await))
+                .service(technology::all),
+        )
+        .await;
 
-    #[test]
-    fn check_json_formatting_index() {
-        let client = Client::tracked(rocket()).expect("could not create client");
-        let response = client.get("/T").dispatch();
-        assert_eq!(response.status(), Status::Ok);
-        let output: Vec<Info> = response.into_json().unwrap();
+        let req = test::TestRequest::get().uri("/").to_request();
+        let response = test::call_service(&mut app, req).await;
+        assert_eq!(response.status(), StatusCode::OK, "response {:?}", response);
+        let output: Vec<Info> = test::read_body_json(response).await;
 
         let correct_outputs = [dummy_info(0), dummy_info(1), dummy_info(10), dummy_info(11)];
 
@@ -176,12 +130,21 @@ mod test {
         }
     }
 
-    #[test]
-    fn check_json_formatting_campus() {
-        let client = Client::tracked(rocket()).expect("could not create client");
-        let response = client.get("/T/campus").dispatch();
-        assert_eq!(response.status(), Status::Ok);
-        let output: Vec<Info> = response.into_json().unwrap();
+    #[actix_rt::test]
+    async fn check_json_formatting_campus() {
+        let mut app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(dummy_state().await))
+                .service(technology::all)
+                .service(technology::campus)
+                .service(technology::academic),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/campus").to_request();
+        let response = test::call_service(&mut app, req).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        let output: Vec<Info> = test::read_body_json(response).await;
 
         let correct_outputs = [dummy_info(10), dummy_info(11)];
 
@@ -198,12 +161,19 @@ mod test {
     }
 
     #[should_panic]
-    #[test]
-    fn check_json_formatting_index_panic() {
-        let client = Client::tracked(rocket()).expect("could not create client");
-        let response = client.get("/T/").dispatch();
-        assert_eq!(response.status(), Status::Ok);
-        let output: Vec<Info> = response.into_json().unwrap();
+    #[actix_rt::test]
+    async fn check_json_formatting_index_panic() {
+        let mut app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(dummy_state().await))
+                .service(technology::all),
+        )
+        .await;
+
+        let req = test::TestRequest::get().uri("/").to_request();
+        let response = test::call_service(&mut app, req).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        let output: Vec<Info> = test::read_body_json(response).await;
 
         // not enough.
         let correct_outputs = [dummy_info(10), dummy_info(11)];
