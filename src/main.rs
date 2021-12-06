@@ -39,6 +39,10 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
 
     let base_path = env::var("TUAT_FEED_API_BASEPATH").unwrap_or_else(|_| String::new());
+    let port = env::var("TUAT_FEED_API_PORT")
+        .ok()
+        .and_then(|val| val.parse::<u16>().ok())
+        .unwrap_or(8080);
 
     tokio::spawn(async move {
         loop {
@@ -70,7 +74,7 @@ async fn main() -> std::io::Result<()> {
             )
             .default_service(web::route().to(|| HttpResponse::NotFound().body("404 Not Found")))
     })
-    .bind("localhost:8081")?
+    .bind(&format!("localhost:{}", port))?
     .run()
     .await
 }
