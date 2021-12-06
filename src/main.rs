@@ -2,7 +2,10 @@
 //!
 //! This is code for a server that formatsthe TUAT feed to json
 
-use actix_web::{http::header, middleware, web, App, HttpRequest, HttpResponse, HttpServer};
+use actix_web::{
+    dev::HttpServiceFactory, http::header, middleware, web, App, HttpRequest, HttpResponse,
+    HttpServer,
+};
 use std::{env, sync::Arc, time::Duration};
 use tokio::time::sleep;
 use tuat_feed_api::{
@@ -15,6 +18,14 @@ const INTERVAL_MINUTES: u64 = 15;
 
 /// Interval duration computed from `INTERVAL_MIN`.
 const INTERVAL: Duration = Duration::from_secs(INTERVAL_MINUTES * 60);
+
+fn redirect_to_name(path: &'static str, name: &'static str) -> impl HttpServiceFactory {
+    web::resource(path).route(web::get().to(|req: HttpRequest| {
+        HttpResponse::Found()
+            .append_header((header::LOCATION, req.url_for_static(name).unwrap().as_str()))
+            .finish()
+    }))
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -53,35 +64,11 @@ async fn main() -> std::io::Result<()> {
                             .service(agriculture::academic)
                             .service(agriculture::campus),
                     )
-                    .service(web::resource("/").route(web::get().to(|req: HttpRequest| {
-                        HttpResponse::Found()
-                            .append_header((
-                                header::LOCATION,
-                                req.url_for_static("technology_all").unwrap().as_str(),
-                            ))
-                            .finish()
-                    })))
-                    .service(
-                        web::resource("/academic").route(web::get().to(|req: HttpRequest| {
-                            HttpResponse::Found()
-                                .append_header((
-                                    header::LOCATION,
-                                    req.url_for_static("technology_academic").unwrap().as_str(),
-                                ))
-                                .finish()
-                        })),
-                    )
-                    .service(
-                        web::resource("/campus").route(web::get().to(|req: HttpRequest| {
-                            HttpResponse::Found()
-                                .append_header((
-                                    header::LOCATION,
-                                    req.url_for_static("technology_campus").unwrap().as_str(),
-                                ))
-                                .finish()
-                        })),
-                    ),
+                    .service(redirect_to_name("/", "technology_all"))
+                    .service(redirect_to_name("/academic", "technology_academic"))
+                    .service(redirect_to_name("/campus", "technology_campus")),
             )
+            .default_service(web::route().to(|| HttpResponse::NotFound().body("404 Not Found")))
     })
     .bind("localhost:8081")?
     .run()
