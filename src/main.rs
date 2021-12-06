@@ -3,8 +3,7 @@
 //! This is code for a server that formatsthe TUAT feed to json
 
 use actix_web::{
-    dev::HttpServiceFactory, http::header, middleware, web, App, HttpRequest, HttpResponse,
-    HttpServer,
+    http::header, middleware, web, App, HttpRequest, HttpResponse, HttpServer, Resource, Route,
 };
 use log::info;
 use std::{env, sync::Arc, time::Duration};
@@ -20,12 +19,20 @@ const INTERVAL_MINUTES: u64 = 15;
 /// Interval duration computed from `INTERVAL_MIN`.
 const INTERVAL: Duration = Duration::from_secs(INTERVAL_MINUTES * 60);
 
-fn redirect_to_name(path: &'static str, name: &'static str) -> impl HttpServiceFactory {
+fn redirect_path_to_name(path: &'static str, name: &'static str) -> Resource {
     web::resource(path).route(web::get().to(|req: HttpRequest| {
         HttpResponse::Found()
             .append_header((header::LOCATION, req.url_for_static(name).unwrap().as_str()))
             .finish()
     }))
+}
+
+fn redirect_to_name(name: &'static str) -> Route {
+    web::route().to(|req: HttpRequest| {
+        HttpResponse::Found()
+            .append_header((header::LOCATION, req.url_for_static(name).unwrap().as_str()))
+            .finish()
+    })
 }
 
 #[actix_web::main]
@@ -63,17 +70,19 @@ async fn main() -> std::io::Result<()> {
                         web::scope("/T")
                             .service(technology::all)
                             .service(technology::academic)
-                            .service(technology::campus),
+                            .service(technology::campus)
+                            .default_service(redirect_to_name("technology_all")),
                     )
                     .service(
                         web::scope("/A")
                             .service(agriculture::all)
                             .service(agriculture::academic)
-                            .service(agriculture::campus),
+                            .service(agriculture::campus)
+                            .default_service(redirect_to_name("agriculture_all")),
                     )
-                    .service(redirect_to_name("/", "technology_all"))
-                    .service(redirect_to_name("/academic", "technology_academic"))
-                    .service(redirect_to_name("/campus", "technology_campus")),
+                    .service(redirect_path_to_name("/academic", "technology_academic"))
+                    .service(redirect_path_to_name("/campus", "technology_campus"))
+                    .default_service(redirect_to_name("technology_all")),
             )
             .default_service(web::route().to(|| HttpResponse::NotFound().body("404 Not Found")))
     })

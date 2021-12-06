@@ -43,7 +43,7 @@ pub mod agriculture {
     use tuat_feed_parser::Info;
 
     /// all data
-    #[get("/")]
+    #[get("/", name = "agriculture_all")]
     pub async fn all(state: web::Data<Arc<ServerState>>) -> impl Responder {
         let info_academic = state.agriculture_academic.information.read().await.clone();
 
