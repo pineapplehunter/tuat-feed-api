@@ -104,7 +104,7 @@ mod test {
 
     #[actix_rt::test]
     async fn check_json_formatting_index() {
-        let mut app = test::init_service(
+        let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(dummy_state().await))
                 .service(technology::all),
@@ -112,7 +112,7 @@ mod test {
         .await;
 
         let req = test::TestRequest::get().uri("/").to_request();
-        let response = test::call_service(&mut app, req).await;
+        let response = test::call_service(&app, req).await;
         assert_eq!(response.status(), StatusCode::OK, "response {:?}", response);
         let output: Vec<Info> = test::read_body_json(response).await;
 
@@ -132,7 +132,7 @@ mod test {
 
     #[actix_rt::test]
     async fn check_json_formatting_campus() {
-        let mut app = test::init_service(
+        let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(dummy_state().await))
                 .service(technology::all)
@@ -142,7 +142,7 @@ mod test {
         .await;
 
         let req = test::TestRequest::get().uri("/campus").to_request();
-        let response = test::call_service(&mut app, req).await;
+        let response = test::call_service(&app, req).await;
         assert_eq!(response.status(), StatusCode::OK);
         let output: Vec<Info> = test::read_body_json(response).await;
 
@@ -163,7 +163,7 @@ mod test {
     #[should_panic]
     #[actix_rt::test]
     async fn check_json_formatting_index_panic() {
-        let mut app = test::init_service(
+        let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(dummy_state().await))
                 .service(technology::all),
@@ -171,7 +171,7 @@ mod test {
         .await;
 
         let req = test::TestRequest::get().uri("/").to_request();
-        let response = test::call_service(&mut app, req).await;
+        let response = test::call_service(&app, req).await;
         assert_eq!(response.status(), StatusCode::OK);
         let output: Vec<Info> = test::read_body_json(response).await;
 
