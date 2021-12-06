@@ -60,13 +60,13 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope(&base_path)
                     .service(
-                        web::scope("/technology")
+                        web::scope("/T")
                             .service(technology::all)
                             .service(technology::academic)
                             .service(technology::campus),
                     )
                     .service(
-                        web::scope("/agriculture")
+                        web::scope("/A")
                             .service(agriculture::all)
                             .service(agriculture::academic)
                             .service(agriculture::campus),
