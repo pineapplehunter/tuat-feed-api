@@ -6,7 +6,7 @@ use actix_web::{
     http::header, middleware, web, App, HttpRequest, HttpResponse, HttpServer, Resource, Route,
 };
 use log::info;
-use std::{env, sync::Arc, time::Duration};
+use std::{env, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::time::sleep;
 use tuat_feed_api::{
     handlers::{agriculture, technology},
@@ -58,7 +58,7 @@ async fn main() -> std::io::Result<()> {
             sleep(INTERVAL).await;
         }
     });
-    let address = format!("localhost:{}", port);
+    let address = SocketAddr::from(([127, 0, 0, 1], port));
     info!("starting server on {}", address);
     HttpServer::new(move || {
         App::new()
@@ -86,7 +86,7 @@ async fn main() -> std::io::Result<()> {
             )
             .default_service(web::route().to(|| HttpResponse::NotFound().body("404 Not Found")))
     })
-    .bind(&address.trim())?
+    .bind(address)?
     .run()
     .await
 }
