@@ -2,7 +2,7 @@ use crate::info_bundle::InfoBundle;
 use log::info;
 use std::time::Instant;
 use tokio::sync::{Mutex, RwLock};
-use tuat_feed_parser::{Feed, FeedCategory, Gakubu};
+use tuat_feed_scraper::{Feed, FeedCategory, Gakubu};
 
 /// State of the server.
 /// contains data for both academic and campus information.

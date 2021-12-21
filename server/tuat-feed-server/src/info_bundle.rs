@@ -1,5 +1,5 @@
 use std::time::Instant;
-use tuat_feed_parser::Info;
+use tuat_feed_common::Info;
 
 /// This struct holds the information and when it was last checked.
 #[derive(Debug, Clone)]
@@ -27,7 +27,7 @@ impl InfoBundle {
 #[cfg(test)]
 mod tests {
     use std::time::Instant;
-    use tuat_feed_parser::Info;
+    use tuat_feed_common::Info;
 
     use super::InfoBundle;
 
