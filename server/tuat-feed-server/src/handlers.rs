@@ -3,7 +3,7 @@ pub mod technology {
     use crate::state::ServerState;
     use actix_web::{get, web, Responder};
     use std::sync::Arc;
-    use tuat_feed_parser::Info;
+    use tuat_feed_common::Info;
 
     /// all data
     #[get("/", name = "technology_all")]
@@ -40,7 +40,7 @@ pub mod agriculture {
     use crate::state::ServerState;
     use actix_web::{get, web, Responder};
     use std::sync::Arc;
-    use tuat_feed_parser::Info;
+    use tuat_feed_common::Info;
 
     /// all data
     #[get("/", name = "agriculture_all")]
@@ -82,7 +82,7 @@ mod test {
     use std::collections::HashMap;
     use std::sync::Arc;
     use std::time::Instant;
-    use tuat_feed_parser::Info;
+    use tuat_feed_common::Info;
 
     fn dummy_info(id: u32) -> Info {
         let mut data = HashMap::new();

@@ -6,16 +6,15 @@
 use std::{collections::HashMap, time::Duration};
 
 use thiserror::Error;
+use tuat_feed_common::Info;
 
 mod get;
-mod info;
 mod parser;
 
 pub use get::{get, GetError};
-pub use info::Info;
 use parser::{error::ParseError, info_parser, main_page_parser};
 
-use log::info;
+use log::{debug, info};
 
 /// campas feed url
 const T_CAMPUS_FEED_URL: &str =
@@ -101,7 +100,7 @@ impl Feed {
         for id in ids {
             let mut info = self.buffer.get(&id).cloned();
             if info.is_none() {
-                info!("fetching new info {} from {}", id, self.name);
+                debug!("fetching new info {} from {}", id, self.name);
                 tokio::time::sleep(Duration::from_secs(1)).await;
                 let content_result = get(&format!("{}{}", self.info_url, id)).await;
                 if content_result.is_err() {

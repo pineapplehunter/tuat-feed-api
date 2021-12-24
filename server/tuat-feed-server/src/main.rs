@@ -8,7 +8,7 @@ use actix_web::{
 use log::info;
 use std::{env, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::time::sleep;
-use tuat_feed_api::{
+use tuat_feed_server::{
     handlers::{agriculture, technology},
     state::ServerState,
 };
