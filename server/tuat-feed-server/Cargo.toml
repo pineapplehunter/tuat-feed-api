@@ -1,6 +1,6 @@
 [package]
 name = "tuat-feed-server"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Shogo Takata <pineapplehunter.daniel@gmail.com>"]
 edition = "2021"
 include = ["src/main.rs", "LICENSE", "README.md"]
