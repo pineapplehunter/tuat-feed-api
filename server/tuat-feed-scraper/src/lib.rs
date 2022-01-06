@@ -6,7 +6,7 @@
 use std::{collections::HashMap, time::Duration};
 
 use thiserror::Error;
-use tuat_feed_common::Info;
+use tuat_feed_common::Post;
 
 mod get;
 mod parser;
@@ -62,11 +62,12 @@ pub enum TuatFeedParserError {
 }
 
 /// For academic and Campus
+#[derive(Debug)]
 pub struct Feed {
     name: String,
     feed_url: &'static str,
     info_url: &'static str,
-    buffer: HashMap<u32, Info>,
+    buffer: HashMap<u32, Post>,
 }
 
 impl Feed {
@@ -91,8 +92,8 @@ impl Feed {
     }
 
     /// get the actual feed
-    pub async fn fetch(&mut self) -> Result<Vec<Info>, TuatFeedParserError> {
-        info!("fetching {} feed", self.name);
+    pub async fn fetch(&mut self) -> Result<Vec<Post>, TuatFeedParserError> {
+        info!("fetching {} feed start", self.name);
         let content = get(self.feed_url).await?;
         let ids = main_page_parser(&content).await?;
 
@@ -116,6 +117,7 @@ impl Feed {
             informations.push(info.unwrap());
         }
 
+        info!("fetching {} feed done", self.name);
         Ok(informations)
     }
 }

@@ -1,6 +1,6 @@
 use std::env;
 
-pub use tuat_feed_common::Info;
+pub use tuat_feed_common::Post;
 
 #[tokio::test]
 async fn main() {
@@ -12,7 +12,7 @@ async fn main() {
     let response = reqwest::get("https://api.ihavenojob.work/tuat/")
         .await
         .unwrap()
-        .json::<Vec<Info>>()
+        .json::<Vec<Post>>()
         .await
         .unwrap();
 

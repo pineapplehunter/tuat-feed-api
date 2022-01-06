@@ -9,7 +9,8 @@ use log::info;
 use std::{env, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::time::sleep;
 use tuat_feed_server::{
-    handlers::{agriculture, technology},
+    handlers_v1::{agriculture, technology},
+    handlers_v2,
     state::ServerState,
 };
 
@@ -42,7 +43,7 @@ async fn main() -> std::io::Result<()> {
 
     env::set_var(
         "RUST_LOG",
-        "actix_web=debug,actix_server=info,tuat_feed_parser=info,tuat_feed_api=info",
+        "actix_web=debug,actix_server=info,tuat_feed_scraper=info,tuat_feed_server=info",
     );
     env_logger::init();
 
@@ -82,7 +83,8 @@ async fn main() -> std::io::Result<()> {
                     )
                     .service(redirect_path_to_name("/academic", "technology_academic"))
                     .service(redirect_path_to_name("/campus", "technology_campus"))
-                    .default_service(redirect_to_name("technology_all")),
+                    .service(web::scope("v2").service(handlers_v2::index))
+                    .default_service(redirect_to_name("index_v2")),
             )
             .default_service(web::route().to(|| HttpResponse::NotFound().body("404 Not Found")))
     })

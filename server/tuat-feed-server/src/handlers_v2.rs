@@ -1,80 +1,88 @@
-/// routes for technology
-pub mod technology {
-    use crate::state::ServerState;
-    use actix_web::{get, web, Responder};
-    use std::sync::Arc;
-    use tuat_feed_common::Info;
+use crate::state::ServerState;
+use actix_web::{get, web};
+use log::warn;
+use serde::Deserialize;
+use std::sync::Arc;
+use tuat_feed_common::Post;
 
-    /// all data
-    #[get("/", name = "technology_all")]
-    pub async fn all(state: web::Data<Arc<ServerState>>) -> impl Responder {
-        let info_academic = state.technology_academic.information.read().await.clone();
+#[derive(Debug, Deserialize)]
+enum Gakubu {
+    Technology,
+    Agriculture,
+}
 
-        let info_campus = state.technology_campus.information.read().await.clone();
-        web::Json(
-            info_academic
-                .info
-                .into_iter()
-                .chain(info_campus.info)
-                .collect::<Vec<Info>>(),
-        )
-    }
-
-    /// academic
-    #[get("/academic", name = "technology_academic")]
-    pub async fn academic(state: web::Data<Arc<ServerState>>) -> impl Responder {
-        let info = state.technology_academic.information.read().await.clone();
-        web::Json(info.info)
-    }
-
-    /// campus
-    #[get("/campus", name = "technology_campus")]
-    pub async fn campus(state: web::Data<Arc<ServerState>>) -> impl Responder {
-        let info = state.technology_campus.information.read().await.clone();
-        web::Json(info.info)
+impl Default for Gakubu {
+    fn default() -> Self {
+        Self::Technology
     }
 }
 
-/// routes for agriculture
-pub mod agriculture {
-    use crate::state::ServerState;
-    use actix_web::{get, web, Responder};
-    use std::sync::Arc;
-    use tuat_feed_common::Info;
+#[derive(Debug, Deserialize)]
+enum Category {
+    All,
+    Academic,
+    Campus,
+}
 
-    /// all data
-    #[get("/", name = "agriculture_all")]
-    pub async fn all(state: web::Data<Arc<ServerState>>) -> impl Responder {
-        let info_academic = state.agriculture_academic.information.read().await.clone();
-
-        let info_campus = state.agriculture_campus.information.read().await.clone();
-        web::Json(
-            info_academic
-                .info
-                .into_iter()
-                .chain(info_campus.info)
-                .collect::<Vec<Info>>(),
-        )
+impl Default for Category {
+    fn default() -> Self {
+        Self::All
     }
+}
 
-    /// academic
-    #[get("/academic")]
-    pub async fn academic(state: web::Data<Arc<ServerState>>) -> impl Responder {
-        let info = state.agriculture_academic.information.read().await.clone();
-        web::Json(info.info)
-    }
+#[derive(Debug, Deserialize)]
+struct QueryType {
+    #[serde(default = "Gakubu::default")]
+    gakubu: Gakubu,
+    #[serde(default = "Category::default")]
+    category: Category,
+}
 
-    /// campus
-    #[get("/campus")]
-    pub async fn campus(state: web::Data<Arc<ServerState>>) -> impl Responder {
-        let info = state.agriculture_campus.information.read().await.clone();
-        web::Json(info.info)
+/// all data
+#[get("/", name = "index_v2")]
+async fn index(
+    state: web::Data<Arc<ServerState>>,
+    query: web::Query<QueryType>,
+) -> web::Json<Vec<Post>> {
+    warn!("gakubu = {:?}", query);
+
+    match query.gakubu {
+        Gakubu::Technology => {
+            let info_academic = state.technology_academic.information.read().await.clone();
+            let info_campus = state.technology_campus.information.read().await.clone();
+            match query.category {
+                Category::All => web::Json(
+                    info_academic
+                        .post
+                        .into_iter()
+                        .chain(info_campus.post)
+                        .collect::<Vec<Post>>(),
+                ),
+                Category::Campus => web::Json(info_campus.post),
+                Category::Academic => web::Json(info_academic.post),
+            }
+        }
+        Gakubu::Agriculture => {
+            let info_academic = state.agriculture_academic.information.read().await.clone();
+            let info_campus = state.agriculture_campus.information.read().await.clone();
+            match query.category {
+                Category::All => web::Json(
+                    info_academic
+                        .post
+                        .into_iter()
+                        .chain(info_campus.post)
+                        .collect::<Vec<Post>>(),
+                ),
+                Category::Campus => web::Json(info_campus.post),
+                Category::Academic => web::Json(info_academic.post),
+            }
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::technology;
+    use crate::handlers_v2::index;
     use crate::info_bundle::InfoBundle;
     use crate::state::ServerState;
     use actix_web::http::StatusCode;
@@ -82,13 +90,21 @@ mod test {
     use std::collections::HashMap;
     use std::sync::Arc;
     use std::time::Instant;
-    use tuat_feed_common::Info;
+    use tuat_feed_common::Post;
 
-    fn dummy_info(id: u32) -> Info {
-        let mut data = HashMap::new();
-        data.insert("hello".into(), "world".into());
-        data.insert("test".into(), "value".into());
-        Info { id, data }
+    fn dummy_info(id: u32) -> Post {
+        Post {
+            post_id: id,
+            title: None,
+            contents: None,
+            updated_date: None,
+            show_date: None,
+            person_in_charge: None,
+            origin: None,
+            category: None,
+            attachment: HashMap::new(),
+            other: HashMap::new(),
+        }
     }
 
     async fn dummy_state() -> Arc<ServerState> {
@@ -107,14 +123,14 @@ mod test {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(dummy_state().await))
-                .service(technology::all),
+                .service(index),
         )
         .await;
 
         let req = test::TestRequest::get().uri("/").to_request();
         let response = test::call_service(&app, req).await;
         assert_eq!(response.status(), StatusCode::OK, "response {:?}", response);
-        let output: Vec<Info> = test::read_body_json(response).await;
+        let output: Vec<Post> = test::read_body_json(response).await;
 
         let correct_outputs = [dummy_info(0), dummy_info(1), dummy_info(10), dummy_info(11)];
 
@@ -135,16 +151,16 @@ mod test {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(dummy_state().await))
-                .service(technology::all)
-                .service(technology::campus)
-                .service(technology::academic),
+                .service(index),
         )
         .await;
 
-        let req = test::TestRequest::get().uri("/campus").to_request();
+        let req = test::TestRequest::get()
+            .uri("/?category=Campus&gakubu=Technology")
+            .to_request();
         let response = test::call_service(&app, req).await;
         assert_eq!(response.status(), StatusCode::OK);
-        let output: Vec<Info> = test::read_body_json(response).await;
+        let output: Vec<Post> = test::read_body_json(response).await;
 
         let correct_outputs = [dummy_info(10), dummy_info(11)];
 
@@ -166,14 +182,14 @@ mod test {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(dummy_state().await))
-                .service(technology::all),
+                .service(index),
         )
         .await;
 
         let req = test::TestRequest::get().uri("/").to_request();
         let response = test::call_service(&app, req).await;
         assert_eq!(response.status(), StatusCode::OK);
-        let output: Vec<Info> = test::read_body_json(response).await;
+        let output: Vec<Post> = test::read_body_json(response).await;
 
         // not enough.
         let correct_outputs = [dummy_info(10), dummy_info(11)];

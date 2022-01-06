@@ -1,5 +1,5 @@
 use std::time::Instant;
-use tuat_feed_common::Info;
+use tuat_feed_common::Post;
 
 /// This struct holds the information and when it was last checked.
 #[derive(Debug, Clone)]
@@ -7,19 +7,19 @@ pub struct InfoBundle {
     /// the time the information was last checked.
     pub last_checked: Instant,
     /// actual information.
-    pub info: Vec<Info>,
+    pub post: Vec<Post>,
 }
 
 impl InfoBundle {
     /// creates a new `InfoBundle` from a `Vec<Info>`.
-    pub fn new(info: Vec<Info>, last_checked: Instant) -> Self {
-        InfoBundle { last_checked, info }
+    pub fn new(post: Vec<Post>, last_checked: Instant) -> Self {
+        InfoBundle { last_checked, post }
     }
 
     /// set a new state.
     /// (used for updating the information)
-    pub fn update(&mut self, info: Vec<Info>) {
-        self.info = info;
+    pub fn update(&mut self, post: Vec<Post>) {
+        self.post = post;
         self.last_checked = Instant::now();
     }
 }
@@ -27,16 +27,19 @@ impl InfoBundle {
 #[cfg(test)]
 mod tests {
     use std::time::Instant;
-    use tuat_feed_common::Info;
+    use tuat_feed_common::Post;
 
     use super::InfoBundle;
 
     #[test]
     fn test_info_bundle_update() {
-        let mut section = InfoBundle::new(vec![Info::new(0)], Instant::now());
-        let InfoBundle { info, last_checked } = section.clone();
-        section.update(vec![Info::new(1)]);
+        let mut section = InfoBundle::new(vec![Post::new(0)], Instant::now());
+        let InfoBundle {
+            post: info,
+            last_checked,
+        } = section.clone();
+        section.update(vec![Post::new(1)]);
         assert!(section.last_checked > last_checked);
-        assert_ne!(section.info[0], info[0]);
+        assert_ne!(section.post[0], info[0]);
     }
 }
