@@ -1,6 +1,5 @@
 use crate::state::ServerState;
 use actix_web::{get, web};
-use log::warn;
 use serde::Deserialize;
 use std::sync::Arc;
 use tuat_feed_common::Post;
@@ -44,8 +43,6 @@ async fn index(
     state: web::Data<Arc<ServerState>>,
     query: web::Query<QueryType>,
 ) -> web::Json<Vec<Post>> {
-    warn!("gakubu = {:?}", query);
-
     match query.gakubu {
         Gakubu::Technology => {
             let info_academic = state.technology_academic.information.read().await.clone();

@@ -22,17 +22,19 @@ const INTERVAL: Duration = Duration::from_secs(INTERVAL_MINUTES * 60);
 
 fn redirect_path_to_name(path: &'static str, name: &'static str) -> Resource {
     web::resource(path).route(web::get().to(|req: HttpRequest| {
+        let url = req.url_for_static(name).unwrap();
         HttpResponse::Found()
-            .append_header((header::LOCATION, req.url_for_static(name).unwrap().as_str()))
-            .finish()
+            .append_header((header::LOCATION, url.as_str()))
+            .body(format!("redirect to {:?}", url.path()))
     }))
 }
 
 fn redirect_to_name(name: &'static str) -> Route {
     web::route().to(|req: HttpRequest| {
+        let url = req.url_for_static(name).unwrap();
         HttpResponse::Found()
-            .append_header((header::LOCATION, req.url_for_static(name).unwrap().as_str()))
-            .finish()
+            .append_header((header::LOCATION, url.as_str()))
+            .body(format!("redirect to {:?}", url.path()))
     })
 }
 
