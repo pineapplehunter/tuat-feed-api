@@ -52,38 +52,15 @@ pub async fn info_parser(content: &str, id: u32) -> Result<Post, ParseError> {
                         .collect::<Vec<String>>()
                         .join("\n");
                     match label_text.trim() {
-                        "タイトル" => {
-                            information.title.replace(data_text);
-                        }
-                        "本文" => {
-                            information.contents.replace(data_text);
-                        }
-                        "担当者" => {
-                            information.person_in_charge.replace(data_text);
-                        }
-                        "発信元" => {
-                            information.origin.replace(data_text);
-                        }
-                        "カテゴリー" => {
-                            information.category.replace(data_text);
-                        }
-                        "最終更新日" => {
-                            let mut data_text = data_text;
-                            while data_text.pop() != Some('(') {}
-                            let data_text = data_text.replace('/', "-");
-                            information.updated_date.replace(data_text);
-                        }
+                        "タイトル" => information.title = data_text,
+                        "本文" => information.contents = data_text,
+                        "担当者" => information.person_in_charge = data_text,
+                        "発信元" => information.origin = data_text,
+                        "カテゴリー" => information.category = data_text,
+                        "最終更新日" => information.updated_date = data_text,
                         "公開期間" => {
                             let (start, end) = data_text.split_once(" 〜 ").unwrap();
-                            let mut start = start.to_string();
-                            while start.pop() != Some('(') {}
-                            let start = start.replace('/', "-");
-
-                            let mut end = end.to_string();
-                            while end.pop() != Some('(') {}
-                            let end = end.replace('/', "-");
-
-                            information.show_date.replace((start, end));
+                            information.show_date = (start.to_string(), end.to_string())
                         }
                         _ => {
                             information.other.insert(label_text, data_text);
@@ -114,13 +91,13 @@ mod test {
 
         let correct = Post {
             post_id: 8000,
-                title: Some("10/7更新\n【工学府】 2021年度後期集中講義の開講について".to_string()),
-                contents: Some("10/7更新：ゲノム情報解析工学特論、先端ゲノム情報解析工学特論について追記しました。\n\n詳細は添付ファイルを参照。\n※講義ごとの開講案内を随時掲載します。\n※未定については、わかり次第お知らせします。".to_string()),
-                updated_date: Some("2021-10-07".to_string()),
-                show_date: Some(("2021-10-07".to_string(),"2022-03-31".to_string())),
-                person_in_charge: Some("教務係".to_string()),
-                origin: Some("教務係".to_string()),
-                category: Some("集中講義 Intensive Lectures".to_string()),
+                title: "10/7更新\n【工学府】 2021年度後期集中講義の開講について".to_string(),
+                contents: "10/7更新：ゲノム情報解析工学特論、先端ゲノム情報解析工学特論について追記しました。\n\n詳細は添付ファイルを参照。\n※講義ごとの開講案内を随時掲載します。\n※未定については、わかり次第お知らせします。".to_string(),
+                updated_date: "2021/10/07(Thu)".to_string(),
+                show_date: ("2021/10/07(Thu)".to_string(),"2022/03/31(Thu)".to_string()),
+                person_in_charge: "教務係".to_string(),
+                origin: "教務係".to_string(),
+                category: "集中講義 Intensive Lectures".to_string(),
                 attachment,
                 other: HashMap::new(),
         };

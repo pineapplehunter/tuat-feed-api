@@ -81,29 +81,13 @@ mod test {
     use crate::state::ServerState;
     use actix_web::http::StatusCode;
     use actix_web::{test, web, App};
-    use std::collections::HashMap;
     use std::sync::Arc;
     use std::time::Instant;
     use tuat_feed_common::{Post, PostCompatv1};
 
-    fn dummy_post(id: u32) -> Post {
-        Post {
-            post_id: id,
-            title: None,
-            contents: None,
-            updated_date: None,
-            show_date: None,
-            person_in_charge: None,
-            origin: None,
-            category: None,
-            attachment: HashMap::new(),
-            other: HashMap::new(),
-        }
-    }
-
     async fn dummy_state() -> Arc<ServerState> {
-        let academic = InfoBundle::new(vec![dummy_post(0), dummy_post(1)], Instant::now());
-        let campus = InfoBundle::new(vec![dummy_post(10), dummy_post(11)], Instant::now());
+        let academic = InfoBundle::new(vec![Post::new(0), Post::new(1)], Instant::now());
+        let campus = InfoBundle::new(vec![Post::new(10), Post::new(11)], Instant::now());
         let state = ServerState::init();
 
         *state.technology_academic.information.write().await = academic;
@@ -126,7 +110,7 @@ mod test {
         assert_eq!(response.status(), StatusCode::OK, "response {:?}", response);
         let output: Vec<PostCompatv1> = test::read_body_json(response).await;
 
-        let correct_outputs = [dummy_post(0), dummy_post(1), dummy_post(10), dummy_post(11)]
+        let correct_outputs = [Post::new(0), Post::new(1), Post::new(10), Post::new(11)]
             .into_iter()
             .map(Into::into)
             .collect::<Vec<_>>();
@@ -159,7 +143,7 @@ mod test {
         assert_eq!(response.status(), StatusCode::OK);
         let output: Vec<PostCompatv1> = test::read_body_json(response).await;
 
-        let correct_outputs = [dummy_post(10), dummy_post(11)]
+        let correct_outputs = [Post::new(10), Post::new(11)]
             .into_iter()
             .map(Into::into)
             .collect::<Vec<_>>();
@@ -192,7 +176,7 @@ mod test {
         let output: Vec<PostCompatv1> = test::read_body_json(response).await;
 
         // not enough.
-        let correct_outputs = [dummy_post(10), dummy_post(11)]
+        let correct_outputs = [Post::new(10), Post::new(11)]
             .into_iter()
             .map(Into::into)
             .collect::<Vec<PostCompatv1>>();

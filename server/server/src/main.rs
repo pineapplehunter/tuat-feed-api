@@ -62,7 +62,7 @@ async fn main() -> std::io::Result<()> {
         }
     });
     let address = SocketAddr::from(([127, 0, 0, 1], port));
-    info!("starting server on {}", address);
+    info!("starting server on http://{}", address);
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())

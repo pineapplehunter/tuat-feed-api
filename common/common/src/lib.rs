@@ -12,25 +12,25 @@ pub struct Post {
     pub post_id: u32,
     /// タイトル
     #[serde(rename = "タイトル")]
-    pub title: Option<String>,
+    pub title: String,
     /// 本文
     #[serde(rename = "本文")]
-    pub contents: Option<String>,
+    pub contents: String,
     /// 最終更新日
     #[serde(rename = "最終更新日")]
-    pub updated_date: Option<String>,
+    pub updated_date: String,
     /// 公開期間
     #[serde(rename = "公開期間")]
-    pub show_date: Option<(String, String)>,
+    pub show_date: (String, String),
     ///担当者
     #[serde(rename = "担当者")]
-    pub person_in_charge: Option<String>,
+    pub person_in_charge: String,
     /// 発信元
     #[serde(rename = "発信元")]
-    pub origin: Option<String>,
+    pub origin: String,
     /// カテゴリー
     #[serde(rename = "カテゴリー")]
-    pub category: Option<String>,
+    pub category: String,
     /// 添付ファイル
     #[serde(rename = "添付ファイル")]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
@@ -44,19 +44,19 @@ pub struct Post {
 }
 
 impl Post {
-    /// creates a new `Info`
-    pub fn new(id: u32) -> Self {
+    /// creates a new post instance
+    pub fn new(post_id: u32) -> Self {
         Self {
-            post_id: id,
-            other: HashMap::new(),
-            origin: None,
-            person_in_charge: None,
-            title: None,
-            contents: None,
-            updated_date: None,
-            show_date: None,
-            category: None,
+            post_id,
+            title: String::new(),
+            contents: String::new(),
+            updated_date: String::new(),
+            show_date: (String::new(), String::new()),
+            person_in_charge: String::new(),
+            origin: String::new(),
+            category: String::new(),
             attachment: HashMap::new(),
+            other: HashMap::new(),
         }
     }
 }
@@ -75,39 +75,21 @@ impl From<Post> for PostCompatv1 {
             post_id: post.post_id,
             data: HashMap::new(),
         };
-        if let Some(title) = post.title {
-            post_compat.data.insert("タイトル".to_string(), title);
-        }
-        if let Some(contents) = post.contents {
-            post_compat.data.insert("本文".to_string(), contents);
-        }
-        if let Some(updated_date) = post.updated_date {
-            post_compat.data.insert("最終更新日".to_string(), {
-                let mut s = updated_date.replace("-", "/");
-                s.push_str("(XXX)");
-                s
-            });
-        }
-        if let Some((mut start, mut end)) = post.show_date {
-            post_compat.data.insert("公開期間".to_string(), {
-                start = start.replace("-", "/");
-                start.push_str("(XXX)");
-                end = end.replace("-", "/");
-                end.push_str("(XXX)");
-                format!("{} 〜 {}", start, end)
-            });
-        }
-        if let Some(person_in_charge) = post.person_in_charge {
-            post_compat
-                .data
-                .insert("担当者".to_string(), person_in_charge);
-        }
-        if let Some(origin) = post.origin {
-            post_compat.data.insert("発信元".to_string(), origin);
-        }
-        if let Some(category) = post.category {
-            post_compat.data.insert("カテゴリー".to_string(), category);
-        }
+        post_compat.data.insert("タイトル".to_string(), post.title);
+        post_compat.data.insert("本文".to_string(), post.contents);
+        post_compat
+            .data
+            .insert("最終更新日".to_string(), post.updated_date);
+        post_compat.data.insert("公開期間".to_string(), {
+            format!("{} 〜 {}", post.show_date.0, post.show_date.1)
+        });
+        post_compat
+            .data
+            .insert("担当者".to_string(), post.person_in_charge);
+        post_compat.data.insert("発信元".to_string(), post.origin);
+        post_compat
+            .data
+            .insert("カテゴリー".to_string(), post.category);
         let attachment_string = post
             .attachment
             .iter()
