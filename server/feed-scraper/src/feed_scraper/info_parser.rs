@@ -17,7 +17,19 @@ pub async fn info_parser(content: &str, id: u32) -> Result<Post, ParseError> {
             }
             let label_text = label_elem.text().collect::<String>();
             match label_text.trim() {
-                "対象" => continue,
+                "対象" => {
+                    let span = Selector::parse("span").unwrap();
+                    information.target = data
+                        .next()
+                        .unwrap()
+                        .select(&span)
+                        .next()
+                        .unwrap()
+                        .text()
+                        .collect::<String>()
+                        .trim()
+                        .to_string();
+                }
                 label_text if label_text.starts_with("添付ファイル") => {
                     let ancor = Selector::parse("a").unwrap();
                     let attachment_iter = data.next().unwrap().select(&ancor).filter_map(
@@ -98,6 +110,7 @@ mod test {
                 person_in_charge: "教務係".to_string(),
                 origin: "教務係".to_string(),
                 category: "集中講義 Intensive Lectures".to_string(),
+                target:"LM[All] / CM(C1)[All] / CM(C2)[All] / CM(C3)[All] / MM[All] / PM[All] / EM[All] / SM(CS)[All] / LD[All] / CD(C1)[All] / CD(C2)[All] / CD(C3)[All] / MD[All] / AD(A1)[All] / AD(A2)[All] / AD(A3)[All]".to_string(),
                 attachment,
                 other: HashMap::new(),
         };

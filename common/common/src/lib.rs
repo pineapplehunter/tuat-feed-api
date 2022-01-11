@@ -31,6 +31,9 @@ pub struct Post {
     /// カテゴリー
     #[serde(rename = "カテゴリー")]
     pub category: String,
+    /// 対象
+    #[serde(rename = "対象")]
+    pub target: String,
     /// 添付ファイル
     #[serde(rename = "添付ファイル")]
     #[serde(skip_serializing_if = "HashMap::is_empty")]
@@ -55,6 +58,7 @@ impl Post {
             person_in_charge: String::new(),
             origin: String::new(),
             category: String::new(),
+            target: String::new(),
             attachment: HashMap::new(),
             other: HashMap::new(),
         }
