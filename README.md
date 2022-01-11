@@ -4,7 +4,7 @@
 
 ## バージョン2
 クエリによって選択できるようにしました。
-https://api.ihavenojob.work/tuat/v2
+https://api.ihavenojob.work/tuat/v2/
 
 ### 学部(gakubu)
 * 工学部
