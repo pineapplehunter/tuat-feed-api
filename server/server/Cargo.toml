@@ -1,6 +1,6 @@
 [package]
 name = "tuat-feed-server"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Shogo Takata <pineapplehunter.daniel@gmail.com>"]
 edition = "2021"
 include = ["src/main.rs", "LICENSE", "README.md"]
@@ -8,8 +8,8 @@ license = "MPL-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-tuat-feed-scraper = { path = "../tuat-feed-scraper" }
-tuat-feed-common = { path = "../../common/tuat-feed-common" }
+tuat-feed-scraper = { path = "../feed-scraper" }
+tuat-feed-common = { path = "../../common/common" }
 log = "0.4.14"
 actix-web = "4.0.0-beta.13"
 anyhow = "1.0.44"

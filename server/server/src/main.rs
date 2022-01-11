@@ -9,7 +9,8 @@ use log::info;
 use std::{env, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::time::sleep;
 use tuat_feed_server::{
-    handlers::{agriculture, technology},
+    handlers_v1::{agriculture, technology},
+    handlers_v2,
     state::ServerState,
 };
 
@@ -21,17 +22,19 @@ const INTERVAL: Duration = Duration::from_secs(INTERVAL_MINUTES * 60);
 
 fn redirect_path_to_name(path: &'static str, name: &'static str) -> Resource {
     web::resource(path).route(web::get().to(|req: HttpRequest| {
+        let url = req.url_for_static(name).unwrap();
         HttpResponse::Found()
-            .append_header((header::LOCATION, req.url_for_static(name).unwrap().as_str()))
-            .finish()
+            .append_header((header::LOCATION, url.as_str()))
+            .body(format!("redirect to {:?}", url.path()))
     }))
 }
 
 fn redirect_to_name(name: &'static str) -> Route {
     web::route().to(|req: HttpRequest| {
+        let url = req.url_for_static(name).unwrap();
         HttpResponse::Found()
-            .append_header((header::LOCATION, req.url_for_static(name).unwrap().as_str()))
-            .finish()
+            .append_header((header::LOCATION, url.as_str()))
+            .body(format!("redirect to {:?}", url.path()))
     })
 }
 
@@ -42,7 +45,7 @@ async fn main() -> std::io::Result<()> {
 
     env::set_var(
         "RUST_LOG",
-        "actix_web=debug,actix_server=info,tuat_feed_parser=info,tuat_feed_api=info",
+        "actix_web=debug,actix_server=info,tuat_feed_scraper=info,tuat_feed_server=info",
     );
     env_logger::init();
 
@@ -59,7 +62,7 @@ async fn main() -> std::io::Result<()> {
         }
     });
     let address = SocketAddr::from(([127, 0, 0, 1], port));
-    info!("starting server on {}", address);
+    info!("starting server on http://{}", address);
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
@@ -82,7 +85,8 @@ async fn main() -> std::io::Result<()> {
                     )
                     .service(redirect_path_to_name("/academic", "technology_academic"))
                     .service(redirect_path_to_name("/campus", "technology_campus"))
-                    .default_service(redirect_to_name("technology_all")),
+                    .service(web::scope("v2").service(handlers_v2::index))
+                    .default_service(redirect_to_name("index_v2")),
             )
             .default_service(web::route().to(|| HttpResponse::NotFound().body("404 Not Found")))
     })

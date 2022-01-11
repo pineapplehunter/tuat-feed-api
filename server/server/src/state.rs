@@ -1,5 +1,5 @@
 use crate::info_bundle::InfoBundle;
-use log::info;
+use log::{info, warn};
 use std::time::Instant;
 use tokio::sync::{Mutex, RwLock};
 use tuat_feed_scraper::{Feed, FeedCategory, Gakubu};
@@ -36,11 +36,12 @@ impl FeedState {
         let mut feed = self.feed.lock().await;
         let new_info = feed.fetch().await;
         if new_info.is_err() {
+            warn!("encounted error in {:?}", feed);
             return;
         }
         let new_info = new_info.unwrap();
         let mut information = self.information.write().await;
-        information.info = new_info;
+        information.post = new_info;
     }
 }
 
@@ -65,6 +66,7 @@ impl ServerState {
         self.technology_campus.update().await;
         self.agriculture_academic.update().await;
         self.agriculture_campus.update().await;
+        info!("state updated");
     }
 }
 
