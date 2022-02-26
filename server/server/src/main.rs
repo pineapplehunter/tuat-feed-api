@@ -21,7 +21,7 @@ const INTERVAL_MINUTES: u64 = 15;
 const INTERVAL: Duration = Duration::from_secs(INTERVAL_MINUTES * 60);
 
 fn redirect_path_to_name(path: &'static str, name: &'static str) -> Resource {
-    web::resource(path).route(web::get().to(|req: HttpRequest| {
+    web::resource(path).route(web::get().to(move |req: HttpRequest| async move {
         let url = req.url_for_static(name).unwrap();
         HttpResponse::Found()
             .append_header((header::LOCATION, url.as_str()))
@@ -30,7 +30,7 @@ fn redirect_path_to_name(path: &'static str, name: &'static str) -> Resource {
 }
 
 fn redirect_to_name(name: &'static str) -> Route {
-    web::route().to(|req: HttpRequest| {
+    web::route().to(move |req: HttpRequest| async move {
         let url = req.url_for_static(name).unwrap();
         HttpResponse::Found()
             .append_header((header::LOCATION, url.as_str()))
@@ -88,7 +88,9 @@ async fn main() -> std::io::Result<()> {
                     .service(web::scope("v2").service(handlers_v2::index))
                     .default_service(redirect_to_name("index_v2")),
             )
-            .default_service(web::route().to(|| HttpResponse::NotFound().body("404 Not Found")))
+            .default_service(
+                web::route().to(|| async { HttpResponse::NotFound().body("404 Not Found") }),
+            )
     })
     .bind(address)?
     .run()
