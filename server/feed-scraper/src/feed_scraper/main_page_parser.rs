@@ -8,7 +8,7 @@ pub async fn main_page_parser(content: &str) -> Result<Vec<u32>, ParseError> {
 
     let mut ids = Vec::new();
 
-    for info in infos.into_iter() {
+    for info in infos {
         let id = info
             .value()
             .attr("i")
