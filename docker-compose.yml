@@ -1,0 +1,11 @@
+services:
+  tuat-feed-server:
+    build: .
+    env_file: .env
+    ports:
+    - "${SERVER_ADDR:-127.0.0.1:8080}:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

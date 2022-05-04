@@ -6,7 +6,7 @@ use actix_web::{
     http::header, middleware, web, App, HttpRequest, HttpResponse, HttpServer, Resource, Route,
 };
 use log::info;
-use std::{env, net::SocketAddr, sync::Arc, time::Duration};
+use std::{env, net::SocketAddr, str::FromStr, sync::Arc, time::Duration};
 use tokio::time::sleep;
 use tuat_feed_server::{
     handlers_v1::{agriculture, technology},
@@ -50,10 +50,7 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
 
     let base_path = env::var("TUAT_FEED_API_BASEPATH").unwrap_or_else(|_| String::new());
-    let port = env::var("TUAT_FEED_API_PORT")
-        .ok()
-        .and_then(|val| val.parse::<u16>().ok())
-        .unwrap_or(8080);
+    let addr = env::var("TUAT_FEED_API_ADDR").unwrap_or_else(|_| "127.0.0.1:8080".to_owned());
 
     tokio::spawn(async move {
         loop {
@@ -61,8 +58,8 @@ async fn main() -> std::io::Result<()> {
             sleep(INTERVAL).await;
         }
     });
-    let address = SocketAddr::from(([127, 0, 0, 1], port));
-    info!("starting server on http://{}", address);
+    let address = SocketAddr::from_str(&addr).unwrap();
+    info!("starting server on http://{}/{}", address, base_path);
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
