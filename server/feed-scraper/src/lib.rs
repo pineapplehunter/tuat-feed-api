@@ -14,7 +14,7 @@ mod get;
 use feed_scraper::{error::ParseError, info_parser, main_page_parser};
 pub use get::{get, GetError};
 
-use log::{debug, info};
+use tracing::{debug, info, Instrument};
 
 /// campas feed url
 const T_CAMPUS_FEED_URL: &str =
@@ -92,22 +92,25 @@ impl Feed {
     }
 
     /// get the actual feed
+    #[tracing::instrument]
     pub async fn fetch(&mut self) -> Result<Vec<Post>, TuatFeedParserError> {
         info!("fetching {} feed start", self.name);
         let content = get(self.feed_url).await?;
-        let ids = main_page_parser(&content).await?;
+        let ids = main_page_parser(content).await?;
 
         let mut informations = Vec::new();
         for id in ids {
             let mut info = self.buffer.get(&id).cloned();
             if info.is_none() {
                 debug!("fetching new info {} from {}", id, self.name);
-                tokio::time::sleep(Duration::from_secs(1)).await;
+                tokio::time::sleep(Duration::from_secs(1))
+                    .instrument(tracing::debug_span!("delay"))
+                    .await;
                 let content_result = get(&format!("{}{}", self.info_url, id)).await;
                 if content_result.is_err() {
                     continue;
                 }
-                let info_result = info_parser(&content_result.unwrap(), id).await;
+                let info_result = info_parser(content_result.unwrap(), id).await;
                 if info_result.is_err() {
                     continue;
                 }

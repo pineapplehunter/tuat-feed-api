@@ -1,7 +1,10 @@
-use crate::state::ServerState;
-use actix_web::{get, web};
-use serde::Deserialize;
-use std::sync::Arc;
+use crate::{redirect_path, state::SharedState};
+use axum::{
+    extract::{Query, State},
+    routing::get,
+    Json, Router,
+};
+use serde_derive::Deserialize;
 use tuat_feed_common::Post;
 
 #[derive(Debug, Deserialize)]
@@ -29,8 +32,9 @@ impl Default for Category {
     }
 }
 
+/// http querys
 #[derive(Debug, Deserialize)]
-struct QueryType {
+pub struct QueryType {
     #[serde(default = "Gakubu::default")]
     gakubu: Gakubu,
     #[serde(default = "Category::default")]
@@ -38,54 +42,60 @@ struct QueryType {
 }
 
 /// all data
-#[get("/", name = "index_v2")]
-async fn index(
-    state: web::Data<Arc<ServerState>>,
-    query: web::Query<QueryType>,
-) -> web::Json<Vec<Post>> {
+pub async fn index(
+    State(state): State<SharedState>,
+    Query(query): Query<QueryType>,
+) -> Json<Vec<Post>> {
     match query.gakubu {
         Gakubu::Technology => {
             let info_academic = state.technology_academic.information.read().await.clone();
             let info_campus = state.technology_campus.information.read().await.clone();
             match query.category {
-                Category::All => web::Json(
+                Category::All => Json(
                     info_academic
                         .post
                         .into_iter()
                         .chain(info_campus.post)
                         .collect::<Vec<Post>>(),
                 ),
-                Category::Campus => web::Json(info_campus.post),
-                Category::Academic => web::Json(info_academic.post),
+                Category::Campus => Json(info_campus.post),
+                Category::Academic => Json(info_academic.post),
             }
         }
         Gakubu::Agriculture => {
             let info_academic = state.agriculture_academic.information.read().await.clone();
             let info_campus = state.agriculture_campus.information.read().await.clone();
             match query.category {
-                Category::All => web::Json(
+                Category::All => Json(
                     info_academic
                         .post
                         .into_iter()
                         .chain(info_campus.post)
                         .collect::<Vec<Post>>(),
                 ),
-                Category::Campus => web::Json(info_campus.post),
-                Category::Academic => web::Json(info_academic.post),
+                Category::Campus => Json(info_campus.post),
+                Category::Academic => Json(info_academic.post),
             }
         }
     }
 }
 
+/// routes for app v2
+pub fn app_v2(base_path: String, initial_state: SharedState) -> Router<SharedState> {
+    Router::with_state(initial_state)
+        .route("/", get(index))
+        .fallback(redirect_path!(v2 base_path))
+}
+
 #[cfg(test)]
 mod test {
-    use crate::handlers_v2::index;
+    use super::*;
     use crate::info_bundle::InfoBundle;
     use crate::state::ServerState;
-    use actix_web::http::StatusCode;
-    use actix_web::{test, web, App};
+    use hyper::{Body, Request, StatusCode};
     use std::sync::Arc;
     use std::time::Instant;
+    use tower::ServiceExt;
     use tuat_feed_common::Post;
 
     async fn dummy_state() -> Arc<ServerState> {
@@ -99,19 +109,18 @@ mod test {
         Arc::new(state)
     }
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn check_json_formatting_index() {
-        let app = test::init_service(
-            App::new()
-                .app_data(web::Data::new(dummy_state().await))
-                .service(index),
-        )
-        .await;
+        let app = app_v2("/".to_string(), dummy_state().await);
 
-        let req = test::TestRequest::get().uri("/").to_request();
-        let response = test::call_service(&app, req).await;
+        let response = app
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
         assert_eq!(response.status(), StatusCode::OK, "response {:?}", response);
-        let output: Vec<Post> = test::read_body_json(response).await;
+        let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        let output: Vec<Post> = serde_json::from_slice(&body).unwrap();
 
         let correct_outputs = [Post::new(0), Post::new(1), Post::new(10), Post::new(11)];
 
@@ -127,21 +136,23 @@ mod test {
         }
     }
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn check_json_formatting_campus() {
-        let app = test::init_service(
-            App::new()
-                .app_data(web::Data::new(dummy_state().await))
-                .service(index),
-        )
-        .await;
+        let app = app_v2("/".to_string(), dummy_state().await);
 
-        let req = test::TestRequest::get()
-            .uri("/?category=Campus&gakubu=Technology")
-            .to_request();
-        let response = test::call_service(&app, req).await;
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/?category=Campus&gakubu=Technology")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
         assert_eq!(response.status(), StatusCode::OK);
-        let output: Vec<Post> = test::read_body_json(response).await;
+        let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        let output: Vec<Post> = serde_json::from_slice(&body).unwrap();
 
         let correct_outputs = [Post::new(10), Post::new(11)];
 
@@ -158,19 +169,18 @@ mod test {
     }
 
     #[should_panic]
-    #[actix_rt::test]
+    #[tokio::test]
     async fn check_json_formatting_index_panic() {
-        let app = test::init_service(
-            App::new()
-                .app_data(web::Data::new(dummy_state().await))
-                .service(index),
-        )
-        .await;
+        let app = app_v2("/".to_string(), dummy_state().await);
 
-        let req = test::TestRequest::get().uri("/").to_request();
-        let response = test::call_service(&app, req).await;
+        let response = app
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
         assert_eq!(response.status(), StatusCode::OK);
-        let output: Vec<Post> = test::read_body_json(response).await;
+        let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        let output: Vec<Post> = serde_json::from_slice(&body).unwrap();
 
         // not enough.
         let correct_outputs = [Post::new(10), Post::new(11)];

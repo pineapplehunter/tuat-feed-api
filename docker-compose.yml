@@ -3,9 +3,12 @@ services:
     build: .
     env_file: .env
     ports:
-    - "${SERVER_ADDR:-127.0.0.1:8080}:80"
+    - "${SERVER_ADDR:-127.0.0.1:8888}:80"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 30s
       timeout: 10s
       retries: 3
+    init: true
+  
+  

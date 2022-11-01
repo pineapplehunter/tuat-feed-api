@@ -12,6 +12,7 @@ pub enum GetError {
 }
 
 /// does the actual getting from the internet part
+#[tracing::instrument]
 pub async fn get(feed_url: &str) -> Result<String, GetError> {
     let content = reqwest::get(feed_url)
         .await?
