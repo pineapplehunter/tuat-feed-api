@@ -73,8 +73,8 @@ pub mod agriculture {
 }
 
 /// routes for app v1
-pub fn app_v1(base_path: String, initial_state: SharedState) -> Router<SharedState> {
-    Router::with_state(initial_state)
+pub fn app_v1(base_path: String, initial_state: SharedState) -> Router {
+    Router::new()
         .route("/T", get(technology::all))
         .route("/T/academic", get(technology::academic))
         .route("/T/campus", get(technology::campus))
@@ -87,6 +87,7 @@ pub fn app_v1(base_path: String, initial_state: SharedState) -> Router<SharedSta
         )
         .route("/campus", get(redirect_path!(v1 base_path, "/T/campus")))
         .fallback(redirect_path!(v1 base_path, "/T"))
+        .with_state(initial_state)
 }
 
 #[cfg(test)]

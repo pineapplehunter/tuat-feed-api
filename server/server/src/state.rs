@@ -1,11 +1,12 @@
 use crate::info_bundle::InfoBundle;
-use std::{sync::Arc, time::Instant};
+use std::{fmt, sync::Arc, time::Instant};
 use tokio::sync::{Mutex, RwLock};
 use tracing::{info, info_span, warn, Instrument};
 use tuat_feed_scraper::{Feed, FeedCategory, Gakubu};
 
 /// State of the server.
 /// contains data for both academic and campus information.
+#[derive(Debug)]
 pub struct ServerState {
     /// state for Technology Academic
     pub technology_academic: FeedState,
@@ -25,6 +26,12 @@ pub struct FeedState {
     feed: Mutex<Feed>,
     /// information from feed. rw lock for fast access.
     pub information: RwLock<InfoBundle>,
+}
+
+impl fmt::Debug for FeedState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("FeedState").finish_non_exhaustive()
+    }
 }
 
 impl FeedState {
@@ -63,7 +70,7 @@ impl ServerState {
     }
 
     /// update all feeds
-    #[tracing::instrument(skip(self))]
+    #[tracing::instrument]
     pub async fn update(&self) {
         info!("updating state");
         self.technology_academic

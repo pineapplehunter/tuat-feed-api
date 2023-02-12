@@ -3,7 +3,7 @@
 //! # tuat-feed-parser
 //! this crate provides a api to access the tuat feed as a struct.
 
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, fmt, time::Duration};
 
 use thiserror::Error;
 use tuat_feed_common::Post;
@@ -62,12 +62,20 @@ pub enum TuatFeedParserError {
 }
 
 /// For academic and Campus
-#[derive(Debug)]
+#[derive(Clone)]
 pub struct Feed {
     name: String,
     feed_url: &'static str,
     info_url: &'static str,
     buffer: HashMap<u32, Post>,
+}
+
+impl fmt::Debug for Feed {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Feed")
+            .field("name", &self.name)
+            .finish_non_exhaustive()
+    }
 }
 
 impl Feed {

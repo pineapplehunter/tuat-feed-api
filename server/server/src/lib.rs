@@ -25,7 +25,7 @@ pub fn app(base_path: String, initial_state: SharedState) -> Router {
     Router::new()
         .nest(
             &base_path,
-            Router::with_state(initial_state.clone())
+            Router::new()
                 .nest("/v1", app_v1(base_path.clone(), initial_state.clone()))
                 .nest("/v2", app_v2(base_path.clone(), initial_state))
                 .fallback(redirect_path!(v2 base_path)),

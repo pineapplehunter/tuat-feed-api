@@ -81,10 +81,11 @@ pub async fn index(
 }
 
 /// routes for app v2
-pub fn app_v2(base_path: String, initial_state: SharedState) -> Router<SharedState> {
-    Router::with_state(initial_state)
+pub fn app_v2(base_path: String, initial_state: SharedState) -> Router {
+    Router::new()
         .route("/", get(index))
         .fallback(redirect_path!(v2 base_path))
+        .with_state(initial_state)
 }
 
 #[cfg(test)]
