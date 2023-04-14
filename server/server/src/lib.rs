@@ -22,15 +22,22 @@ pub mod state;
 
 /// router for the whole app
 pub fn app(base_path: String, initial_state: SharedState) -> Router {
-    Router::new()
-        .nest(
-            &base_path,
-            Router::new()
-                .nest("/v1", app_v1(base_path.clone(), initial_state.clone()))
-                .nest("/v2", app_v2(base_path.clone(), initial_state))
-                .fallback(redirect_path!(v2 base_path)),
-        )
-        .fallback(redirect_path!(v2 base_path))
+    let inner_router = Router::new()
+        .merge(Router::new().nest("/v1/", app_v1(base_path.clone(), initial_state.clone())))
+        .merge(Router::new().nest("/v2/", app_v2(base_path.clone(), initial_state)))
+        .fallback(redirect_path!(v2 base_path));
+
+    if base_path.is_empty() || base_path == "/" {
+        inner_router
+    } else {
+        Router::new()
+            .nest(
+                // &base_path,
+                &base_path,
+                inner_router,
+            )
+            .fallback(redirect_path!(v2 base_path))
+    }
 }
 
 /// use this to generate redirect paths
@@ -70,4 +77,30 @@ macro_rules! redirect_path {
             axum::response::Redirect::temporary(&format!("{}/v2/", base_path))
         }
     }};
+}
+
+#[cfg(test)]
+mod test {
+    use std::{sync::Arc, time::Instant};
+    use tuat_feed_common::Post;
+
+    use crate::{app, info_bundle::InfoBundle, state::ServerState};
+
+    async fn dummy_state() -> Arc<ServerState> {
+        let academic = InfoBundle::new(vec![Post::new(0), Post::new(1)], Instant::now());
+        let campus = InfoBundle::new(vec![Post::new(10), Post::new(11)], Instant::now());
+        let state = ServerState::init();
+
+        *state.technology_academic.information.write().await = academic;
+        *state.technology_campus.information.write().await = campus;
+
+        Arc::new(state)
+    }
+
+    #[tokio::test]
+    async fn can_create_app() {
+        let _app = app("".to_string(), dummy_state().await);
+        let _app = app("/".to_string(), dummy_state().await);
+        let _app = app("/base_path".to_string(), dummy_state().await);
+    }
 }

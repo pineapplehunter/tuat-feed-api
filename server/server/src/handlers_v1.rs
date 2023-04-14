@@ -12,8 +12,8 @@ pub mod technology {
     /// all data
     pub async fn all(State(state): State<SharedState>) -> Json<Vec<PostCompatv1>> {
         let info_academic = state.technology_academic.information.read().await.clone();
-
         let info_campus = state.technology_campus.information.read().await.clone();
+
         Json(
             info_academic
                 .post
