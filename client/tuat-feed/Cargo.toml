@@ -6,6 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# reqwest = { version = "0.11.7", features = ["json"] }
-tokio = { version = "1.14.0", features = [] }
+reqwest = { version = "0.11.7", features = ["json"] }
+tokio = { version = "1.18.5", features = ["full"] }
 tuat-feed-common = { path = "../../common/common" }
