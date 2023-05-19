@@ -1,6 +1,7 @@
 # 農工大WEB掲示板API
 
-![CI](https://github.com/pineapplehunter/tuat-feed-api/workflows/CI/badge.svg)
+[![Check and test](https://github.com/pineapplehunter/tuat-feed-api/actions/workflows/check_test.yml/badge.svg)](https://github.com/pineapplehunter/tuat-feed-api/actions/workflows/check_test.yml)
+[![codecov](https://codecov.io/gh/pineapplehunter/tuat-feed-api/branch/main/graph/badge.svg?token=2R060ZQDDE)](https://codecov.io/gh/pineapplehunter/tuat-feed-api)
 
 ## バージョン2
 クエリによって選択できるようにしました。
