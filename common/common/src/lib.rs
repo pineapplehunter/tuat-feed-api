@@ -1,11 +1,11 @@
 #![warn(missing_docs)]
 //! This crate holds some common data structures for both server and client
 
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// data for a post on feed
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Post {
     /// the id of the information. found in the tuat feed.
     #[serde(rename = "投稿ID")]
@@ -66,7 +66,7 @@ impl Post {
 }
 
 /// Compatibility layer for Post
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct PostCompatv1 {
     #[serde(rename = "id")]
     post_id: u32,

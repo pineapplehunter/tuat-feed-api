@@ -1,11 +1,12 @@
 use crate::info_bundle::InfoBundle;
-use log::{info, warn};
-use std::time::Instant;
+use std::{fmt, sync::Arc, time::Instant};
 use tokio::sync::{Mutex, RwLock};
+use tracing::{info, info_span, warn, Instrument};
 use tuat_feed_scraper::{Feed, FeedCategory, Gakubu};
 
 /// State of the server.
 /// contains data for both academic and campus information.
+#[derive(Debug)]
 pub struct ServerState {
     /// state for Technology Academic
     pub technology_academic: FeedState,
@@ -17,11 +18,20 @@ pub struct ServerState {
     pub agriculture_campus: FeedState,
 }
 
+/// Atomic shared state
+pub type SharedState = Arc<ServerState>;
+
 /// State for each feed
 pub struct FeedState {
     feed: Mutex<Feed>,
     /// information from feed. rw lock for fast access.
     pub information: RwLock<InfoBundle>,
+}
+
+impl fmt::Debug for FeedState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("FeedState").finish_non_exhaustive()
+    }
 }
 
 impl FeedState {
@@ -60,12 +70,25 @@ impl ServerState {
     }
 
     /// update all feeds
+    #[tracing::instrument]
     pub async fn update(&self) {
         info!("updating state");
-        self.technology_academic.update().await;
-        self.technology_campus.update().await;
-        self.agriculture_academic.update().await;
-        self.agriculture_campus.update().await;
+        self.technology_academic
+            .update()
+            .instrument(info_span!("update technology_academic"))
+            .await;
+        self.technology_campus
+            .update()
+            .instrument(info_span!("update technology_campus"))
+            .await;
+        self.agriculture_academic
+            .update()
+            .instrument(info_span!("update agriculture_academic"))
+            .await;
+        self.agriculture_campus
+            .update()
+            .instrument(info_span!("update agriculture_campus"))
+            .await;
         info!("state updated");
     }
 }

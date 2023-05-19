@@ -1,3 +1,5 @@
+use backoff::future::retry;
+use backoff::ExponentialBackoff;
 use thiserror::Error;
 
 /// the error that happens when accessing the internet
@@ -12,12 +14,15 @@ pub enum GetError {
 }
 
 /// does the actual getting from the internet part
+#[tracing::instrument]
 pub async fn get(feed_url: &str) -> Result<String, GetError> {
-    let content = reqwest::get(feed_url)
-        .await?
-        .text()
-        .await
-        .map_err(|_e| GetError::InvalidTextError)?;
-
-    Ok(content)
+    retry(ExponentialBackoff::default(), || async {
+        Ok(reqwest::get(feed_url)
+            .await
+            .map_err(GetError::ConnectionError)?
+            .text()
+            .await
+            .map_err(|_e| GetError::InvalidTextError)?)
+    })
+    .await
 }

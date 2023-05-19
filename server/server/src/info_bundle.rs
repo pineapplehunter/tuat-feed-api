@@ -1,13 +1,19 @@
-use std::time::Instant;
+use std::{fmt, time::Instant};
 use tuat_feed_common::Post;
 
 /// This struct holds the information and when it was last checked.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct InfoBundle {
     /// the time the information was last checked.
     pub last_checked: Instant,
     /// actual information.
     pub post: Vec<Post>,
+}
+
+impl fmt::Debug for InfoBundle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("InfoBundle").finish_non_exhaustive()
+    }
 }
 
 impl InfoBundle {
