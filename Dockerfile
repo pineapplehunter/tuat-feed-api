@@ -1,9 +1,9 @@
-FROM rust:1.68-buster as builder
+FROM rust:1.69-buster as builder
 RUN mkdir /code
 WORKDIR /code
 
-RUN apt update && apt install musl-tools -y
-RUN rustup target add x86_64-unknown-linux-musl
+RUN apt-get update && apt-get install musl-tools -y --no-install-recommends && \
+    rustup target add x86_64-unknown-linux-musl
 
 RUN mkdir -p client/tuat-feed/src common/common/src server/feed-scraper/src server/server/src
 COPY Cargo.lock Cargo.toml ./
@@ -23,11 +23,12 @@ COPY . ./
 RUN touch client/tuat-feed/src/lib.rs \
     common/common/src/lib.rs \
     server/feed-scraper/src/lib.rs \
-    server/server/src/lib.rs
-RUN cargo install --target x86_64-unknown-linux-musl --path ./server/server/ --root output 
-RUN strip /code/output/bin/tuat-feed-server
+    server/server/src/lib.rs && \
+    cargo install --target x86_64-unknown-linux-musl --path ./server/server/ --root output && \
+    strip /code/output/bin/tuat-feed-server
 
 FROM scratch
+WORKDIR /app
 COPY --from=builder /code/output/bin/tuat-feed-server .
 
 ENV TUAT_FEED_API_ADDR=0.0.0.0:80
