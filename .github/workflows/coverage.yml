@@ -41,7 +41,7 @@ jobs:
           override: true
           components: rustfmt, clippy
       
-      - name: Install cargo-hack
+      - name: Install cargo-tarpaulin
         uses: baptiste0928/cargo-install@v2
         with:
           crate: cargo-tarpaulin
