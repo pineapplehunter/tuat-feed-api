@@ -31,9 +31,9 @@
         options.pineapplehunter.services.tuat-feed-server = {
           enable = mkEnableOption "Enable the tuat feed server service";
 
-          port = mkOption rec {
-            type = types.int;
-            default = 8000;
+          address = mkOption rec {
+            type = types.str;
+            default = "0.0.0.0:8000";
             example = default;
             description = "the port to run the server";
           };
@@ -41,23 +41,27 @@
           base_url = mkOption rec {
             type = types.str;
             default = "";
-            example = "/tuat/";
+            example = "/tuat";
             description = "the base url to run the server";
           };
         };
 
         config = {
           nixpkgs.overlays = [ self.overlays.default ];
-        } // mkIf cfg.enable {
+
           systemd.services.tuat-feed-server = {
             wantedBy = [ "multi-user.target" ];
             serviceConfig =
-              let pkg = self.packages.${pkgs.stdenv.hostPlatform.system}.tuat-feed-server;
+              let pkg = pkgs.tuat-feed-server;
               in {
                 Restart = "on-failure";
                 ExecStart = "${pkg}/bin/tuat-feed-server";
                 DynamicUser = "yes";
               };
+            environment = {
+              TUAT_FEED_API_ADDR = cfg.address;
+              TUAT_FEED_API_BASEPATH = "/tuat";
+            };
           };
         };
       };
@@ -74,21 +78,17 @@
 
       checks = {
         vmTestServerUp =
-          with import (nixpkgs + "/nixos/lib/testing-python.nix")
-            {
-              inherit system;
-            };
+          with import (nixpkgs + "/nixos/lib/testing-python.nix") { inherit system; };
           makeTest {
             name = "vmTestServerUp";
+
             nodes.server = { ... }: {
               imports = [ self.nixosModules.default ];
-
               pineapplehunter.services.tuat-feed-server.enable = true;
             };
 
             testScript = ''
               start_all()
-
               server.wait_for_open_port(8000)
             '';
           };
