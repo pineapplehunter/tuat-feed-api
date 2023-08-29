@@ -2,14 +2,28 @@
   description = "A very basic flake";
 
   inputs.flake-utils.url = "github:numtide/flake-utils";
+  inputs.rust-overlay.url = "github:oxalica/rust-overlay";
+  inputs.nix-filter.url = "github:numtide/nix-filter";
 
-  outputs = { self, nixpkgs, flake-utils }: {
+  outputs = { self, nixpkgs, flake-utils, rust-overlay, nix-filter }: {
     overlays.default = final: prev: {
-      tuat-feed-server = final.rustPlatform.buildRustPackage rec {
+      tuat-feed-server = let 
+      filter = nix-filter.lib;
+      in final.rustPlatform.buildRustPackage rec {
         pname = "tuat-feed-server";
         version = "0.1.0";
 
-        src = ./.;
+        src = filter {
+          root= ./.;
+          include = [
+            ./Cargo.toml
+            ./Cargo.lock
+            ./rust-toolchain.toml
+            "server"
+            "common"
+            "client"
+          ];
+        };
         cargoLock.lockFile = ./Cargo.lock;
 
         doCheck = true;
@@ -44,6 +58,12 @@
             example = "/tuat";
             description = "the base url to run the server";
           };
+
+          program = mkOption rec {
+            type = types.package;
+            default = pkgs.tuat-feed-server;
+            description = "the program to run";
+          };
         };
 
         config = {
@@ -51,13 +71,11 @@
 
           systemd.services.tuat-feed-server = {
             wantedBy = [ "multi-user.target" ];
-            serviceConfig =
-              let pkg = pkgs.tuat-feed-server;
-              in {
-                Restart = "on-failure";
-                ExecStart = "${pkg}/bin/tuat-feed-server";
-                DynamicUser = "yes";
-              };
+            serviceConfig = {
+              Restart = "on-failure";
+              ExecStart = "${cfg.program}/bin/tuat-feed-server";
+              DynamicUser = "yes";
+            };
             environment = {
               TUAT_FEED_API_ADDR = cfg.address;
               TUAT_FEED_API_BASEPATH = "/tuat";
@@ -68,12 +86,16 @@
   } //
   flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
     let
-      pkgs = import nixpkgs { inherit system; overlays = [ self.overlays.default ]; };
+      pkgs = import nixpkgs { inherit system; overlays = [ self.overlays.default rust-overlay.overlays.default ]; };
     in
     {
       packages = {
         inherit (pkgs) tuat-feed-server;
         default = self.packages.${system}.tuat-feed-server;
+      };
+
+      devShells.default = pkgs.mkShell {
+        packages = with pkgs;[ stdenv.cc pkg-config openssl ];
       };
 
       checks = {
