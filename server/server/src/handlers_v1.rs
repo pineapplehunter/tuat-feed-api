@@ -7,7 +7,7 @@ pub mod technology {
     use crate::state::SharedState;
     use axum::extract::State;
     use axum::response::Json;
-    use tuat_feed_common::PostCompatv1;
+    use tuat_feed_scraper::post::PostCompatv1;
 
     /// all data
     pub async fn all(State(state): State<SharedState>) -> Json<Vec<PostCompatv1>> {
@@ -42,7 +42,7 @@ pub mod agriculture {
     use crate::state::SharedState;
     use axum::extract::State;
     use axum::response::Json;
-    use tuat_feed_common::PostCompatv1;
+    use tuat_feed_scraper::post::PostCompatv1;
 
     /// all data
     pub async fn all(State(state): State<SharedState>) -> Json<Vec<PostCompatv1>> {
@@ -100,7 +100,7 @@ mod test {
     use std::sync::Arc;
     use std::time::Instant;
     use tower::ServiceExt;
-    use tuat_feed_common::{Post, PostCompatv1};
+    use tuat_feed_scraper::post::{Post, PostCompatv1};
 
     async fn dummy_state() -> SharedState {
         let academic = InfoBundle::new(vec![Post::new(0), Post::new(1)], Instant::now());

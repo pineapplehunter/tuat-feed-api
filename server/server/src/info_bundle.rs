@@ -1,5 +1,6 @@
 use std::{fmt, time::Instant};
-use tuat_feed_common::Post;
+
+use tuat_feed_scraper::post::Post;
 
 /// This struct holds the information and when it was last checked.
 #[derive(Clone)]
@@ -33,7 +34,7 @@ impl InfoBundle {
 #[cfg(test)]
 mod tests {
     use std::time::Instant;
-    use tuat_feed_common::Post;
+    use tuat_feed_scraper::post::Post;
 
     use super::InfoBundle;
 

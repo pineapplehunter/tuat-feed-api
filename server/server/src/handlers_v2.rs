@@ -5,7 +5,7 @@ use axum::{
     Json, Router,
 };
 use serde_derive::Deserialize;
-use tuat_feed_common::Post;
+use tuat_feed_scraper::post::Post;
 
 #[derive(Debug, Deserialize)]
 enum Gakubu {
@@ -97,7 +97,6 @@ mod test {
     use std::sync::Arc;
     use std::time::Instant;
     use tower::ServiceExt;
-    use tuat_feed_common::Post;
 
     async fn dummy_state() -> Arc<ServerState> {
         let academic = InfoBundle::new(vec![Post::new(0), Post::new(1)], Instant::now());

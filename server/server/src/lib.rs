@@ -46,11 +46,11 @@ pub fn app(base_path: String, initial_state: SharedState) -> Router {
 #[macro_export]
 macro_rules! redirect_path {
     (v1 $base_path:ident, $sub_path:expr) => {{
-        let base_path = $base_path.clone();
-        let sub_path = $sub_path.to_string();
+        let base_path_ = $base_path.clone();
+        let sub_path_ = $sub_path.to_string();
         || async {
-            let base_path = base_path;
-            let sub_path = sub_path;
+            let base_path = base_path_;
+            let sub_path = sub_path_;
             axum::response::Redirect::temporary(&format!("{}/v1{}", base_path, sub_path))
         }
     }};
@@ -62,18 +62,18 @@ macro_rules! redirect_path {
         }
     }};
     (v2 $base_path:ident, $sub_path:expr) => {{
-        let base_path = $base_path.clone();
-        let sub_path = $sub_path.to_string();
+        let base_path_ = $base_path.clone();
+        let sub_path_ = $sub_path.to_string();
         || async {
-            let base_path = base_path;
-            let sub_path = sub_path;
+            let base_path = base_path_;
+            let sub_path = sub_path_;
             axum::response::Redirect::temporary(&format!("{}/v2{}", base_path, sub_path))
         }
     }};
     (v2 $base_path:ident) => {{
-        let base_path = $base_path.clone();
+        let base_path_ = $base_path.clone();
         || async {
-            let base_path = base_path;
+            let base_path = base_path_;
             axum::response::Redirect::temporary(&format!("{}/v2/", base_path))
         }
     }};
@@ -82,7 +82,8 @@ macro_rules! redirect_path {
 #[cfg(test)]
 mod test {
     use std::{sync::Arc, time::Instant};
-    use tuat_feed_common::Post;
+
+    use tuat_feed_scraper::post::Post;
 
     use crate::{app, info_bundle::InfoBundle, state::ServerState};
 

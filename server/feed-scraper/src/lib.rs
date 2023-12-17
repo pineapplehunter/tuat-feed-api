@@ -5,11 +5,12 @@
 
 use std::{collections::HashMap, fmt, time::Duration};
 
+use post::Post;
 use thiserror::Error;
-use tuat_feed_common::Post;
 
 mod feed_scraper;
 mod get;
+pub mod post;
 
 use feed_scraper::{error::ParseError, info_parser, main_page_parser};
 pub use get::{get, GetError};
