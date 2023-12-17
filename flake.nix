@@ -3,7 +3,11 @@
 
   inputs.nixpkgs.url = "nixpkgs/nixpkgs-unstable";
   inputs.flake-utils.url = "github:numtide/flake-utils";
-  inputs.rust-overlay.url = "github:oxalica/rust-overlay";
+  inputs.rust-overlay = {
+    url = "github:oxalica/rust-overlay";
+    inputs.nixpkgs.follows = "nixpkgs";
+    inputs.flake-utils.follows = "flake-utils";
+  };
   inputs.nix-filter.url = "github:numtide/nix-filter";
 
   outputs = { self, nixpkgs, systems, ... }@inputs: {
@@ -32,8 +36,8 @@
       in
       {
         packages = rec{
-          tuat-feed-server = pkgs.callPackage ./nix/package.nix { };
           default = tuat-feed-server;
+          tuat-feed-server = pkgs.callPackage ./nix/package.nix { };
           docker = pkgs.callPackage ./nix/docker.nix { };
 
           pkgsCross = forEachSystem (lib.filter (sys: sys != system) allSystems) (crossSystem:
