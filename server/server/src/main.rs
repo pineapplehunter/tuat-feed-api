@@ -3,7 +3,7 @@
 //! This is code for a server that formatsthe TUAT feed to json
 
 use std::{env, net::SocketAddr, str::FromStr, sync::Arc, time::Duration};
-use tokio::time::sleep;
+use tokio::{net::TcpListener, time::sleep};
 use tower_http::trace::{self, TraceLayer};
 use tracing::{info, Level};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -47,8 +47,6 @@ async fn main() {
             .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
     );
 
-    axum::Server::bind(&address)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let listener = TcpListener::bind(&address).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }

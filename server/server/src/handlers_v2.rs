@@ -93,7 +93,9 @@ mod test {
     use super::*;
     use crate::info_bundle::InfoBundle;
     use crate::state::ServerState;
-    use hyper::{Body, Request, StatusCode};
+    use axum::body::Body;
+    use http_body_util::BodyExt;
+    use hyper::{Request, StatusCode};
     use std::sync::Arc;
     use std::time::Instant;
     use tower::ServiceExt;
@@ -119,7 +121,7 @@ mod test {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK, "response {:?}", response);
-        let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        let body = response.into_body().collect().await.unwrap().to_bytes();
         let output: Vec<Post> = serde_json::from_slice(&body).unwrap();
 
         let correct_outputs = [Post::new(0), Post::new(1), Post::new(10), Post::new(11)];
@@ -151,7 +153,7 @@ mod test {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
-        let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        let body = response.into_body().collect().await.unwrap().to_bytes();
         let output: Vec<Post> = serde_json::from_slice(&body).unwrap();
 
         let correct_outputs = [Post::new(10), Post::new(11)];
@@ -179,7 +181,7 @@ mod test {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
-        let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        let body = response.into_body().collect().await.unwrap().to_bytes();
         let output: Vec<Post> = serde_json::from_slice(&body).unwrap();
 
         // not enough.
